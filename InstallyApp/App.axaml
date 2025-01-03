@@ -1,0 +1,51 @@
+<Application
+    RequestedThemeVariant="Dark"
+    x:Class="InstallyApp.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:local="using:InstallyApp"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <MergeResourceInclude Source="/Views/Controls/CheckIcon.axaml" />
+                <MergeResourceInclude Source="/Views/Controls/Dropdown.axaml" />
+                <MergeResourceInclude Source="/Views/Controls/IconButton.axaml" />
+                <MergeResourceInclude Source="/Views/Controls/TextField.axaml" />
+                <MergeResourceInclude Source="/Resources/Svgs.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+
+        <SolidColorBrush Color="#7251b5" x:Key="PrimaryAction" />
+        <SolidColorBrush Color="#6247AA" x:Key="SecondaryAction" />
+
+        <SolidColorBrush Color="#FFF" x:Key="PrimaryText" />
+        <SolidColorBrush Color="#DFDFDF" x:Key="SecondaryText" />
+
+        <SolidColorBrush Color="#2d2d33" x:Key="PrimaryBackground" />
+        <SolidColorBrush Color="#1e1d22" x:Key="SecondaryBackground" />
+        <SolidColorBrush Color="#000" x:Key="TertiaryBackground" />
+
+        <SolidColorBrush Color="#FFF" x:Key="PrimarySvg" />
+
+        <SolidColorBrush Color="#c26161" x:Key="NegativeColor" />
+        <SolidColorBrush Color="#AE5050" x:Key="NegativeHoverColor" />
+        <SolidColorBrush Color="#04A589" x:Key="PositiveColor" />
+        <SolidColorBrush Color="#0F8A75" x:Key="PositiveHoverColor" />
+
+        <FontFamily x:Key="Poppins">avares://InstallyApp/Assets/Fonts#Poppins</FontFamily>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="Styles/DefaultStyles/Button.axaml" />
+        <StyleInclude Source="Styles/DefaultStyles/Checkbox.axaml" />
+        <StyleInclude Source="Styles/DefaultStyles/TextBlock.axaml" />
+        <StyleInclude Source="Styles/DefaultStyles/TextBox.axaml" />
+        <StyleInclude Source="Styles/DefaultStyles/Svg.axaml" />
+    </Application.Styles>
+</Application>

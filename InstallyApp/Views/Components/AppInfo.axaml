@@ -1,0 +1,179 @@
+<UserControl
+    d:DesignHeight="450"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Views.Items.AppInfo"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <Border
+            Background="{DynamicResource PrimaryBackground}"
+            CornerRadius="12"
+            MaxWidth="300"
+            Padding="28">
+            <Grid RowDefinitions="Auto, *, Auto, Auto, Auto">
+                <Grid ColumnDefinitions="Auto, *">
+                    <Border
+                        Background="{DynamicResource SecondaryColor}"
+                        CornerRadius="50"
+                        Height="50"
+                        VerticalAlignment="Top"
+                        Width="50"
+                        x:Name="WrapperIcon" />
+
+                    <Grid Grid.Column="1" HorizontalAlignment="Right">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Text="3.4.1"
+                            TextAlignment="Right"
+                            x:Name="LatestVersion" />
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Grid.Row="1"
+                            Text="by Blender Foundation"
+                            x:Name="Publisher" />
+                    </Grid>
+                </Grid>
+
+                <StackPanel Grid.Row="1" Margin="0,0,0,18">
+                    <TextBlock
+                        ClipToBounds="True"
+                        Margin="0,14,0,0"
+                        MaxHeight="80"
+                        Text="Blender is the full animation suit, he can handle simulation, rendering, compositing and motion tracking, video editing and 2D animation pipeline. Blender is the free and open source 3D creation suite. It supports the entirety of the 3D pipeline—modeling, rigging, animation, simulation, rendering, compositing and motion tracking, video editing and 2D animation pipeline."
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Top"
+                        x:Name="Description" />
+
+                    <Border Background="Transparent" Cursor="Hand">
+                        <Grid ColumnDefinitions="Auto, *" Margin="0,14,0,0">
+                            <IconButton
+                                Classes="small"
+                                Click="ButtonShowMore_OnClick"
+                                Content="Full Description"
+                                Icon="{StaticResource ArrowDownSvg}"
+                                x:Name="ButtonShowMore" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <Grid
+                    ColumnDefinitions="Auto, *"
+                    Grid.Row="2"
+                    HorizontalAlignment="Left"
+                    Margin="0,0,0,20">
+
+                    <IconButton
+                        Classes="icon-only"
+                        Content=""
+                        Icon="{StaticResource TagSvg}"
+                        IsHitTestVisible="False"
+                        Padding="0,0,0,12"
+                        VerticalAlignment="Top" />
+
+                    <WrapPanel
+                        Grid.Column="1"
+                        Margin="10,0,0,0"
+                        Orientation="Horizontal"
+                        Width="230"
+                        x:Name="TagsList">
+
+                        <WrapPanel.Styles>
+                            <Style Selector="Border">
+                                <Setter Property="Background" Value="{DynamicResource SecondaryBackground}" />
+                                <Setter Property="CornerRadius" Value="5" />
+                                <Setter Property="Margin" Value="4 0 4 4" />
+                                <Setter Property="Padding" Value="10 2" />
+                            </Style>
+
+                            <Style Selector="TextBlock.TextBlockItem">
+                                <Setter Property="TextAlignment" Value="Center" />
+                                <Setter Property="FontSize" Value="12" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="Margin" Value="0 0 0 2" />
+                            </Style>
+                        </WrapPanel.Styles>
+
+                        <Border>
+                            <TextBlock Classes="TextBlockItem" Text="3d" />
+                        </Border>
+                        <Border>
+                            <TextBlock Classes="TextBlockItem" Text="animation" />
+                        </Border>
+                        <Border>
+                            <TextBlock Classes="TextBlockItem" Text="modeling" />
+                        </Border>
+                        <Border>
+                            <TextBlock Classes="TextBlockItem" Text="render" />
+                        </Border>
+                        <Border>
+                            <TextBlock Classes="TextBlockItem" Text="rigging" />
+                        </Border>
+                    </WrapPanel>
+                </Grid>
+
+
+                <!--  My Favorites - TO IMPLEMENT  -->
+
+                <!--<Grid Grid.Row="3" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Viewbox Width="18" Height="18">
+                        <Grid>
+                            <Path Data="M0.501465 4.43797C0.501465 4.43797 2.15284 3.98088 2.89045 3.23201C3.63235 2.47878 4.08522 0.785295 4.08522 0.785295C4.08522 0.785295 4.54309 2.47879 5.28663 3.23201C6.02341 3.97838 7.66898 4.43797 7.66898 4.43797C7.66898 4.43797 6.02492 4.80331 5.28663 5.51807C4.49511 6.28435 4.08522 8.09065 4.08522 8.09065C4.08522 8.09065 3.68033 6.28446 2.89045 5.51807C2.15123 4.80081 0.501465 4.43797 0.501465 4.43797Z"
+                                  Fill="#FAFF00"/>
+                        </Grid>
+                    </Viewbox>
+
+                    <TextBlock Grid.Column="1" Margin="10 0 0 0" FontWeight="SemiBold">My Favorites</TextBlock>
+                </Grid>-->
+
+                <!--  Last uptated - TO IMPLEMENT  -->
+
+                <!--<Grid
+                    ColumnDefinitions="Auto, *"
+                    Grid.Row="4"
+                    HorizontalAlignment="Right"
+                    IsVisible="True"
+                    VerticalAlignment="Bottom">
+
+                    <Viewbox
+                        Height="12"
+                        Margin="0,2,0,0"
+                        Width="12">
+                        <Path
+                            Data="M3.83393 1.69607V3.1366H3.14136M3.83393 5.44629C5.26826 5.44629 6.43103 4.28351 6.43103 2.84918C6.43103 1.41484 5.26826 0.252075 3.83393 0.252075C2.39958 0.252075 1.23682 1.41484 1.23682 2.84918C1.23682 4.28351 2.39958 5.44629 3.83393 5.44629Z"
+                            Stroke="{DynamicResource PrimaryText}"
+                            StrokeThickness="0.5" />
+                    </Viewbox>
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="{DynamicResource PrimaryText}"
+                        Grid.Column="1"
+                        Margin="5,0,0,0"
+                        x:Name="UpdatedAt">
+                        Last updated Mar 16, 2023
+                    </TextBlock>
+                </Grid>-->
+            </Grid>
+        </Border>
+    </ScrollViewer>
+</UserControl>

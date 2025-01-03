@@ -1,0 +1,53 @@
+<Window
+    Background="{DynamicResource PrimaryBackground}"
+    Height="700"
+    Icon="/Assets/instally-logo.ico"
+    KeyDown="InputElement_OnKeyDown"
+    MinHeight="540"
+    MinWidth="820"
+    Title="Instally"
+    Width="1200"
+    WindowStartupLocation="CenterScreen"
+    x:Class="InstallyApp.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Background="{DynamicResource PrimaryBackground}">
+        <Grid RowDefinitions="*, auto" x:Name="LayoutMain">
+            <Grid
+                ColumnDefinitions="*, *, *, *"
+                Margin="18"
+                x:Name="CollectionList">
+                <Grid.Styles>
+                    <Style Selector="AppCollection">
+                        <Setter Property="Margin" Value="0,0,10,0" />
+                    </Style>
+                </Grid.Styles>
+                <AppCollection Grid.Column="0" x:Name="AppCollection" />
+                <AppCollection Grid.Column="1" />
+                <AppCollection Grid.Column="2" />
+                <AddNewCollection Grid.Column="3" />
+            </Grid>
+
+            <CheckIcon
+                Background="Aqua"
+                Grid.Row="1"
+                Height="50"
+                Width="50" />
+
+            <Button
+                Grid.Row="0"
+                IsHitTestVisible="False"
+                Opacity="0"
+                x:Name="HiddenButtonToFocus" />
+
+            <Grid
+                Grid.Row="0"
+                Grid.RowSpan="2"
+                ZIndex="2"
+                x:Name="Modals" />
+
+            <Footer Grid.Row="1" x:Name="Footer" />
+        </Grid>
+    </Grid>
+</Window>

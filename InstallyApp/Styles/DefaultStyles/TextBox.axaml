@@ -1,0 +1,38 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <StackPanel Spacing="20">
+                <TextBox Classes="clearButton">Clear</TextBox>
+                <TextBox Classes="revealPasswordButton" PasswordChar="*">Reveal Password</TextBox>
+                <TextBox
+                    Classes="revealPasswordButton"
+                    PasswordChar="*"
+                    RevealPassword="True">
+                    Password Revealed
+                </TextBox>
+                <TextBox Watermark="Watermark" />
+                <TextBox UseFloatingWatermark="True" Watermark="Floating Watermark">Content</TextBox>
+            </StackPanel>
+        </Border>
+    </Design.PreviewWith>
+
+    <!--
+    <Style Selector="TextBox:focus /template/ Border">
+        <Setter Property="Background" Value="Red"/>
+    </Style>
+    -->
+
+
+    <Style Selector=":is(TextBox)">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryText}" />
+    </Style>
+
+    <Style Selector=":is(TextBox).clearButton">
+        <Setter Property="FontSize" Value="20" />
+    </Style>
+</Styles>

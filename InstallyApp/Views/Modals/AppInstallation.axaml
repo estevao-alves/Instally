@@ -1,0 +1,109 @@
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Pages.AppInstallation"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Border Background="{DynamicResource TertiaryBackground}" Opacity=".6" />
+
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border
+                Background="{DynamicResource SecondaryBackground}"
+                CornerRadius="10"
+                Height="200"
+                Margin="8"
+                Width="400">
+                <Grid
+                    Margin="20"
+                    RowDefinitions="Auto, Auto, Auto, Auto"
+                    VerticalAlignment="Center">
+
+                    <TextBlock
+                        FontSize="20"
+                        Foreground="#FFFFFF"
+                        Grid.Row="0"
+                        Margin="0,0,0,10"
+                        Text="Checking..."
+                        TextAlignment="Center"
+                        x:Name="Title" />
+
+                    <ProgressBar
+                        BorderThickness="0"
+                        Foreground="{DynamicResource PrimaryAction}"
+                        Grid.Row="1"
+                        Height="10"
+                        IsIndeterminate="True"
+                        IsVisible="False"
+                        Margin="0,10,0,15"
+                        x:Name="ProgressBar" />
+
+                    <TextBlock
+                        FontSize="13"
+                        Foreground="#FFFFFF"
+                        Grid.Row="2"
+                        LineHeight="28"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        x:Name="TextDetails" />
+
+                    <StackPanel
+                        Grid.Row="3"
+                        HorizontalAlignment="Center"
+                        IsVisible="True"
+                        Margin="0,20,0,0"
+                        Orientation="Horizontal"
+                        Spacing="10"
+                        x:Name="Buttons">
+
+                        <IconButton
+                            Classes="action positive"
+                            Content="Confirm"
+                            Icon="{StaticResource CheckSvg}"
+                            IsVisible="False"
+                            x:Name="Confirm" />
+
+                        <IconButton
+                            Classes="action negative"
+                            Content="Cancel"
+                            Icon="{StaticResource TimesSvg}"
+                            IsVisible="False"
+                            x:Name="Cancel" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Grid.Row="0"
+                        Grid.RowSpan="2"
+                        HorizontalAlignment="Right"
+                        Margin="0,-35,-10,0"
+                        Orientation="Horizontal"
+                        Spacing="5"
+                        VerticalAlignment="Top" />
+                </Grid>
+            </Border>
+
+            <!--<IconButton
+                Background="{DynamicResource SecondaryBackground}"
+                Classes="small icon-only"
+                Click="MinimizeButton_OnClick"
+                Content=""
+                Icon="{StaticResource HorizontalLineSvg}"
+                x:Name="MinimizeButton" />-->
+
+            <IconButton
+                Background="{DynamicResource SecondaryBackground}"
+                Classes="small icon-only"
+                Click="CloseButton_OnClick"
+                Content=""
+                HorizontalAlignment="Right"
+                Icon="{StaticResource TimesSvg}"
+                Margin="0,20,20,0"
+                VerticalAlignment="Top"
+                x:Name="CloseButton" />
+        </Grid>
+    </Grid>
+</UserControl>

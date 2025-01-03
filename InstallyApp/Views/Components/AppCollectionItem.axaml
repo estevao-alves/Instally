@@ -1,0 +1,64 @@
+<UserControl
+    Background="{DynamicResource SecondaryBackground}"
+    d:DesignWidth="250"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Views.Components.AppCollectionItem"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="0,0,0,3" PointerPressed="AppItem_PointerPressed">
+        <Border
+            Background="Transparent"
+            CornerRadius="6"
+            Focusable="True"
+            x:Name="BorderWrapper" />
+
+        <DockPanel
+            Height="30"
+            Margin="12,5"
+            VerticalAlignment="Center">
+            <Grid>
+                <Viewbox
+                    Height="20"
+                    Width="20"
+                    x:Name="WrapperAppIcon">
+                    <Border
+                        Background="{DynamicResource PrimaryBackground}"
+                        CornerRadius="18"
+                        Height="18"
+                        Width="18" />
+                </Viewbox>
+            </Grid>
+
+            <TextBlock
+                FontSize="16"
+                Foreground="White"
+                Margin="10,0,8,0"
+                Padding="2"
+                Text="App Name"
+                TextTrimming="CharacterEllipsis"
+                VerticalAlignment="Center"
+                x:Name="Title" />
+        </DockPanel>
+
+        <IconButton
+            Background="{DynamicResource SecondaryBackground}"
+            Classes="icon-only small"
+            Click="RemoveButton_Click"
+            Content=""
+            HorizontalAlignment="Right"
+            Icon="{StaticResource TimesSvg}"
+            Margin="5"
+            x:Name="RemoveButton">
+            <IconButton.Styles>
+                <Style Selector="Grid:pointerover &gt; IconButton">
+                    <Setter Property="IsVisible" Value="True" />
+                </Style>
+                <Style Selector="IconButton">
+                    <Setter Property="IsVisible" Value="False" />
+                </Style>
+            </IconButton.Styles>
+        </IconButton>
+    </Grid>
+</UserControl>

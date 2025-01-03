@@ -1,0 +1,71 @@
+<UserControl
+    Background="{DynamicResource PrimaryBackground}"
+    d:DesignHeight="600"
+    d:DesignWidth="300"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Views.Items.AddNewCollection"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Styles>
+        <Style Selector="Border.add-collection-border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Duration="0:0:0.3" Property="Background" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border:pointerover.add-collection-border">
+            <Setter Property="Background" Value="#03FFFFFF" />
+        </Style>
+
+        <Style Selector="IconButton">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Duration="0:0:0.3" Property="RenderTransform" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Grid:pointerover &gt; IconButton">
+            <Setter Property="RenderTransform" Value="scale(1.2)" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border
+        BorderThickness="4"
+        Classes="add-collection-border"
+        CornerRadius="10"
+        Cursor="Hand"
+        Padding="-2"
+        PointerPressed="AddNewCollection_OnPointerPressed"
+        x:Name="AddNewCollectionButton">
+
+        <Grid Background="Transparent">
+            <Rectangle
+                Fill="Transparent"
+                RadiusX="8"
+                RadiusY="8"
+                Stroke="{DynamicResource SecondaryBackground}"
+                StrokeDashArray="3, 4"
+                StrokeLineCap="Round"
+                StrokeThickness="4" />
+
+            <IconButton
+                Classes="icon-only"
+                Click="AddNewCollection_OnClick"
+                Content=""
+                Height="50"
+                HorizontalAlignment="Center"
+                Icon="{StaticResource AddSvg}"
+                IconColor="{DynamicResource SecondaryBackground}"
+                Width="50"
+                ZIndex="-1" />
+        </Grid>
+    </Border>
+</UserControl>

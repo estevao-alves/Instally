@@ -1,0 +1,93 @@
+<UserControl
+    d:DesignHeight="600"
+    d:DesignWidth="300"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Views.Components.AppCollection"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Border Background="{DynamicResource SecondaryBackground}" CornerRadius="7">
+        <Grid Margin="15" RowDefinitions="*, auto">
+            <Grid Grid.Row="0" RowDefinitions="Auto, Auto, *">
+                <Grid ColumnDefinitions="*, auto">
+                    <Grid ColumnDefinitions="*, auto">
+                        <TextBox
+                            KeyUp="CollectionTitle_OnKeyUp"
+                            LostFocus="CollectionTitle_OnLostFocus"
+                            Margin="0,0,15,0"
+                            Padding="8,8,30,8"
+                            Watermark="Collection"
+                            x:Name="CollectionTitle" />
+                    </Grid>
+
+                    <IconButton
+                        Classes="action icon-only"
+                        Click="AddButton_OnClick"
+                        Content=""
+                        Grid.Column="1"
+                        Icon="{StaticResource AddSvg}"
+                        x:Name="AddButton" />
+
+                    <IconButton
+                        Classes="base icon-only"
+                        Content=""
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        Icon="{StaticResource PenSvg}"
+                        IconColor="{DynamicResource PrimaryBackground}"
+                        IsHitTestVisible="False"
+                        Margin="0,0,18,0" />
+                </Grid>
+
+                <Rectangle
+                    Fill="#000000"
+                    Grid.Row="1"
+                    Height="1"
+                    Margin="-15,10"
+                    Opacity=".2" />
+
+                <ScrollViewer
+                    Grid.Row="2"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer.Styles>
+                        <Style Selector="IconButton">
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        </Style>
+                    </ScrollViewer.Styles>
+                    <StackPanel x:Name="Apps">
+                        <AppCollectionItem AppName="Blender" x:Name="AppCollectionItem" />
+                        <AppCollectionItem AppName="Krita" />
+                        <AppCollectionItem AppName="Rider" />
+                        <AppCollectionItem AppName="Blender" />
+                        <AppCollectionItem AppName="Krita" />
+                        <AppCollectionItem AppName="Rider" />
+                        <AppCollectionItem AppName="Blender" />
+                        <AppCollectionItem AppName="Krita" />
+                        <AppCollectionItem AppName="Rider" />
+                        <AppCollectionItem AppName="Blender" />
+                        <AppCollectionItem AppName="Krita" />
+                        <AppCollectionItem AppName="Rider" />
+                        <AppCollectionItem AppName="Krita" />
+                        <AppCollectionItem AppName="Krita" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <StackPanel
+                Grid.Row="1"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                VerticalAlignment="Bottom">
+
+                <IconButton
+                    Classes="base icon-only"
+                    Click="DeleteCollectionButton_OnClick"
+                    Content=""
+                    Icon="{StaticResource TrashSvg}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

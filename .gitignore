@@ -1,0 +1,9 @@
+# Ignore JetBrains user-specific settings
+*.DotSettings.user
+*.idea/
+
+# Ignore output directories
+*InstallyApp/bin
+*InstallyApp/obj
+*InstallyAPI/bin
+*InstallyAPI/obj

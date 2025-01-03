@@ -1,0 +1,121 @@
+<UserControl
+    d:DesignHeight="180"
+    d:DesignWidth="320"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Views.Modals.AppInSearchList"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Styles>
+        <Style Selector="Border.already-added">
+            <Setter Property="BorderBrush" Value="{DynamicResource PositiveColor}" />
+        </Style>
+
+        <Style Selector="Border.already-added:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource NegativeColor}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid MinHeight="190">
+        <Grid>
+            <Border
+                Background="Transparent"
+                CornerRadius="10"
+                Cursor="Hand"
+                Focusable="True"
+                Margin="12"
+                Padding="20"
+                PointerEntered="WrapperAppItem_OnPointerEntered"
+                PointerExited="WrapperAppItem_OnPointerExited"
+                PointerPressed="WrapperAppItem_PointerPressed"
+                x:Name="WrapperAppItem">
+                <Grid RowDefinitions="Auto, *">
+                    <Grid x:Name="GridParaArredondarImagem">
+                        <Border
+                            Background="{DynamicResource PrimaryBackground}"
+                            CornerRadius="50"
+                            Height="50"
+                            Margin="0,0,0,20"
+                            Width="50"
+                            x:Name="IconBackgroundCircle">
+
+                            <Border x:Name="WrapperIcon" />
+                        </Border>
+                    </Grid>
+
+                    <TextBlock
+                        Grid.Row="1"
+                        HorizontalAlignment="Center"
+                        Margin="-10,0"
+                        MaxHeight="1200"
+                        MaxLines="2"
+                        Text="Loading Application..."
+                        TextAlignment="Center"
+                        TextTrimming="WordEllipsis"
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Center"
+                        x:Name="Title" />
+
+                    <CheckIcon
+                        Grid.Row="0"
+                        HorizontalAlignment="Right"
+                        IsChecked="False"
+                        IsCheckedChanged="InfoIcon_OnIsCheckedChanged"
+                        Margin="0,-8,0,0"
+                        VerticalAlignment="Top"
+                        Width="20"
+                        x:Name="InfoIcon" />
+                </Grid>
+            </Border>
+
+            <Border
+                Background="{DynamicResource PrimaryBackground}"
+                BorderThickness="2"
+                Classes="already-added"
+                CornerRadius="10"
+                Margin="15"
+                ZIndex="-1"
+                x:Name="IsAddedBorder" />
+
+        </Grid>
+
+
+        <Popup
+            IsOpen="False"
+            Placement="Pointer"
+            PlacementTarget="{Binding ElementName=WrapperAppItem}"
+            x:Name="AlertPopup">
+            <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, *">
+                <Canvas>
+                    <Rectangle
+                        Fill="{DynamicResource TertiaryBackground}"
+                        Height="55"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="55">
+                        <Rectangle.RenderTransform>
+                            <TranslateTransform Y="-30" />
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+                </Canvas>
+
+                <Border
+                    Background="{DynamicResource TertiaryBackground}"
+                    CornerRadius="10"
+                    Grid.Row="1"
+                    Padding="14,10">
+                    <TextBlock
+                        FontSize="12"
+                        Foreground="{DynamicResource LightGray}"
+                        Text="App already added in {MyCollection}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        x:Name="AlertPopupText" />
+                </Border>
+            </Grid>
+        </Popup>
+
+    </Grid>
+</UserControl>

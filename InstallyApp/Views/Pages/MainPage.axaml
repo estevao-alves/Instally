@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<UserControl
+    x:Class="InstallyApp.Pages.MainPage"
+    x:DataType="viewModels:MainPageViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:viewModels="clr-namespace:InstallyApp.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid RowDefinitions="auto, *">
+        <StackPanel DockPanel.Dock="Top">
+            <Button
+                Click="OnAddUserClicked"
+                Content="Add InstallyApp"
+                Margin="10" />
+        </StackPanel>
+
+        <ListBox
+            Grid.Row="1"
+            ItemsSource="{Binding Users}"
+            Margin="10"
+            SelectionChanged="OnSelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="5">
+                        <TextBlock
+                            FontSize="16"
+                            Foreground="White"
+                            Text="{Binding Email}" />
+                        <TextBlock
+                            FontSize="16"
+                            Foreground="White"
+                            Text="{Binding Password}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

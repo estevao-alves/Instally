@@ -1,0 +1,51 @@
+<UserControl
+    Background="{DynamicResource PrimaryColor}"
+    x:Class="InstallyApp.Pages.ManageUsersPage"
+    x:DataType="ManageUserViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.Styles>
+            <Style Selector="Button">
+                <Setter Property="Margin" Value="10,0,10,20" />
+                <Setter Property="Padding" Value="20" />
+            </Style>
+        </Grid.Styles>
+
+        <Grid
+            ColumnDefinitions="*,*,*"
+            Margin="20"
+            RowDefinitions="*,Auto">
+            <StackPanel Grid.ColumnSpan="3" Grid.Row="0">
+                <TextBox
+                    Margin="0,0,0,10"
+                    Text="{Binding User.Email}"
+                    Watermark="Enter Email"
+                    x:Name="EmailTextBox" />
+                <TextBox
+                    Margin="0,0,0,10"
+                    PasswordChar="●"
+                    Text="{Binding User.Password}"
+                    Watermark="Enter Password"
+                    x:Name="PasswordTextBox" />
+            </StackPanel>
+
+            <Button
+                Command="{Binding SaveCommand}"
+                Content="Save"
+                Grid.Column="0"
+                Grid.Row="1" />
+            <Button
+                Command="{Binding DeleteCommand}"
+                Content="Delete"
+                Grid.Column="1"
+                Grid.Row="1" />
+            <Button
+                Command="{Binding CancelCommand}"
+                Content="Cancel"
+                Grid.Column="2"
+                Grid.Row="1" />
+        </Grid>
+    </Grid>
+</UserControl>

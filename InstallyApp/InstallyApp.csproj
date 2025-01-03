@@ -1,0 +1,104 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <RootNamespace>InstallyApp</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**" Exclude="Assets\Svgs\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.2.1"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.2.1"/>
+        <PackageReference Include="Avalonia.Svg" Version="11.2.0.2" />
+        <PackageReference Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1"/>
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
+        <PackageReference Include="MediatR" Version="12.4.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.21"/>
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.21"/>
+        <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.21"/>
+        <PackageReference Include="ReactiveUI" Version="20.1.63" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\InstallyAPI\InstallyAPI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Assets\Images\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\AddCollection.axaml.cs">
+        <DependentUpon>AddCollection.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\AppInfo.axaml.cs">
+        <DependentUpon>AppInfo.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\AppInSearchList.axaml.cs">
+        <DependentUpon>AppInSearchList.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\CollectionItem.axaml.cs">
+        <DependentUpon>CollectionItem.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\MenuAppItem.axaml.cs">
+        <DependentUpon>MenuAppItem.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Modals\AppInstallation.axaml.cs">
+        <DependentUpon>AppsInstallation.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Modals\AppSearch.axaml.cs">
+        <DependentUpon>AppsSearch.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\TextField.axaml.cs">
+        <DependentUpon>TextField.axaml.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Views\Components\AppInSearchList.axaml.cs">
+        <DependentUpon>AppInSearchList.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\Controls\CheckIcon.axaml.cs">
+        <DependentUpon>CheckIcon.axaml.axaml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Pages\AppsInstallation.axaml" />
+      <UpToDateCheckInput Remove="Pages\Login.axaml" />
+      <UpToDateCheckInput Remove="Pages\MainPage.axaml" />
+      <UpToDateCheckInput Remove="Pages\ManageUsersPage.axaml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Views\Pages\MainPage.axaml" />
+      <AdditionalFiles Include="Views\Pages\ManageUsersPage.axaml" />
+    </ItemGroup>
+</Project>

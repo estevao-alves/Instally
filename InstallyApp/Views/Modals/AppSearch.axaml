@@ -1,0 +1,153 @@
+<UserControl
+    Initialized="AppSearch_OnInitialized"
+    d:DesignHeight="600"
+    d:DesignWidth="1000"
+    mc:Ignorable="d"
+    x:Class="InstallyApp.Pages.AppSearch"
+    x:DataType="pages:AppSearch"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:modals="clr-namespace:InstallyApp.Views.Modals"
+    xmlns:pages="clr-namespace:InstallyApp.Pages"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Border Background="{DynamicResource TertiaryBackground}" Opacity=".6" />
+
+        <Border
+            Background="{DynamicResource SecondaryBackground}"
+            CornerRadius="10"
+            Margin="100"
+            Padding="20">
+            <Grid ColumnDefinitions="*, *" RowDefinitions="40, *, 40">
+
+                <Grid>
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextField
+                            Background="{DynamicResource PrimaryBackground}"
+                            ClearSelectionOnLostFocus="True"
+                            CornerRadius="50"
+                            FontSize="14"
+                            KeyUp="SearchTextField_KeyUp"
+                            Padding="25,0"
+                            TextSize="14"
+                            VerticalContentAlignment="Center"
+                            Watermark="Search"
+                            x:Name="SearchTextField" />
+
+                        <IconButton
+                            Classes="icon-only"
+                            Click="Search_OnClick"
+                            Content=""
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            Icon="{StaticResource SearchSvg}"
+                            Margin="-45,0,20,0" />
+                    </Grid>
+                </Grid>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Orientation="Horizontal">
+
+                    <Dropdown
+                        ItemsSource="{Binding Categories}"
+                        Margin="20,0"
+                        SelectedItem="{Binding SelectedCategoryName, Mode=TwoWay}"
+                        SelectionChanged="ComboBoxCategory_OnSelectionChanged"
+                        x:Name="ComboBoxCategory" />
+                </StackPanel>
+
+                <Grid
+                    ColumnDefinitions="*, Auto"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Grid.Row="1"
+                    Margin="0,20,0,10"
+                    ZIndex="-1">
+
+                    <Border
+                        BorderBrush="{DynamicResource SecondaryBackground}"
+                        BorderThickness="2"
+                        CornerRadius="10">
+                        <ScrollViewer x:Name="ScrollBar">
+                            <UniformGrid
+                                Columns="4"
+                                SizeChanged="AppList_OnSizeChanged"
+                                VerticalAlignment="Top"
+                                x:Name="AppList">
+                                <modals:AppInSearchList />
+                                <modals:AppInSearchList />
+                                <modals:AppInSearchList />
+                                <modals:AppInSearchList />
+                                <modals:AppInSearchList />
+                                <modals:AppInSearchList />
+                                <modals:AppInSearchList />
+                            </UniformGrid>
+                        </ScrollViewer>
+                    </Border>
+
+                    <AppInfo
+                        Grid.Column="1"
+                        IsVisible="False"
+                        x:Name="AppInfo" />
+                </Grid>
+
+                <ScrollViewer
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Grid.Row="2"
+                    Height="50"
+                    HorizontalScrollBarVisibility="Auto"
+                    Margin="0,0,100,0"
+                    VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal" x:Name="SearchAppsSelected">
+                        <StackPanel.Styles>
+                            <Style Selector="Button">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBackground}" />
+                                <Setter Property="Height" Value="50" />
+                                <Setter Property="CornerRadius" Value="7" />
+                                <Setter Property="Margin" Value="0 0 10 0 " />
+                                <Setter Property="Width" Value="50" />
+                            </Style>
+
+                            <Style Selector="TextBlock">
+                                <Setter Property="FontSize" Value="30" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="Foreground" Value="{DynamicResource SecondaryText}" />
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </StackPanel.Styles>
+
+                        <Button>
+                            <Image Source="/Assets/instally-logo.ico" />
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <IconButton
+                    Classes="action text-only"
+                    Click="AddApps_OnClick"
+                    Content="Add"
+                    FontWeight="SemiBold"
+                    Grid.Column="1"
+                    Grid.Row="2"
+                    HorizontalAlignment="Right" />
+
+                <IconButton
+                    Classes="icon-only subtle small"
+                    Click="CloseButton_OnClick"
+                    Content=""
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    HorizontalAlignment="Right"
+                    Icon="{StaticResource TimesSvg}"
+                    VerticalAlignment="Top" />
+            </Grid>
+        </Border>
+    </Grid>
+
+</UserControl>
