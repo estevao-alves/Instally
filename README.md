@@ -5,18 +5,14 @@
   </a>
   <h1>Instally: A Package Manager Built for WinGet</h1>
   <br>
-</div>
 
   [![SQLite](https://img.shields.io/badge/SQLite-%2307405e.svg?logo=sqlite&logoColor=white)](#)
   [![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white)](#)
   [![C#](https://custom-icon-badges.demolab.com/badge/C%23-%23239120.svg?logo=cshrp&logoColor=white)](#)
   [![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=fff)](#)
 
-- [About](#about)
-- [Features](#features)
-- [Future Goals](#future-goals)
-- [Contribute](#contribute)
-- [License](#license)
+  <br>
+</div>
 
 ## 📖 About
 
