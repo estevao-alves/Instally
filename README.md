@@ -3,7 +3,8 @@
   <a href="https://www.instally.app">
     <img src="./InstallyApp/Assets/Images/instally-banner.png" alt="Instally Banner">
   </a>
-  <h2>Instally: A Package Manager Built for WinGet</h2>
+  <h1>Instally: A Package Manager Built for WinGet</h1>
+  <br>
 </div>
 
   [![SQLite](https://img.shields.io/badge/SQLite-%2307405e.svg?logo=sqlite&logoColor=white)](#)
@@ -16,6 +17,11 @@
 
 Instally is a GUI interface for WinGet designed to simplify the application installation process. No more browsing multiple websites or dealing with inconsistent download interfaces. Instally centralizes everything, ensuring you always get the latest official versions of the apps you need.
 
+<div align="center">
+  <a href="https://www.instally.app">
+    <img src="./InstallyApp/Assets/Images/instally-main-window.png" alt="Instally Banner">
+  </a>
+</div>
 
 ## 🛠️ Features
 
@@ -37,6 +43,11 @@ Instally is a GUI interface for WinGet designed to simplify the application inst
 - Drag and drop apps between collections and reorder them.
 - Optimized speed and responsiveness.
 
+<div align="center">
+  <a href="https://www.instally.app">
+    <img src="./InstallyApp/Assets/Images/instally-search.png" alt="Instally Banner">
+  </a>
+</div>
 
 ## 📦 Packages
 
