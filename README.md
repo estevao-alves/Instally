@@ -12,11 +12,11 @@
   [![C#](https://custom-icon-badges.demolab.com/badge/C%23-%23239120.svg?logo=cshrp&logoColor=white)](#)
   [![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=fff)](#)
 
-- [About](##About)
-- [Features](##Features)
-- [Future Goals](##Future Goals)
-- [Contribute](##Contribute)
-- [License](###License)
+- [About](#about)
+- [Features](#features)
+- [Future Goals](#future-goals)
+- [Contribute](#contribute)
+- [License](#license)
 
 ## 📖 About
 
