@@ -40,7 +40,7 @@ Instally is a GUI interface for WinGet designed to simplify the application inst
 
 **Additional Planned Features:**
 - Add the same app to multiple collections.
-- Remove apps directly from the search list.
+- The apps added in our [online search](https://instally.app/search) should automatically be added to Instally App when downloaded.
 - Drag and drop apps between collections and reorder them.
 - Optimized speed and responsiveness.
 
