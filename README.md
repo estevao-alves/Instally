@@ -64,7 +64,7 @@ Instally is an indie project and will only be able to continue its development w
 - Buying products from my store, [Cozy Dragon](https://www.cozydragon.shop/#!/)
 - Making a donation - any amount is highly appreciated! 💜
 
- [![https://ko-fi.com/stay](https://img.shields.io/badge/Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](#) [![https://buy.stripe.com/test_6oE6rT22paVs6YgdQQ](https://img.shields.io/badge/Stripe-5851DD?logo=stripe&logoColor=fff)](#)
+https://ko-fi.com/stay
 
 
 ## 📜 License
