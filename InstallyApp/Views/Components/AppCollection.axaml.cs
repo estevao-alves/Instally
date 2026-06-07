@@ -2,12 +2,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
-using Instally.App.Application;
+using Avalonia.Threading;
 using InstallyAPI.Commands.CollectionCommands;
 using InstallyAPI.Commands.PackageCommands;
 using InstallyAPI.Commands.UserCommands;
 using InstallyAPI.Models;
 using InstallyAPI.Queries.Interfaces;
+using InstallyApp.Services;
 using InstallyApp.Views.Layout;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,9 +17,9 @@ namespace InstallyApp.Views.Components;
 public partial class AppCollection : UserControl
 {
     public CollectionEntity Collection { get; set; }
-    public List<PackageEntity> CollectionPackages { get; set; }
+    public Guid CollectionId { get; set; }
     public int collectionIndex { get; set; }
-    public bool isActive = false;
+    private bool _isDeleting;
 
     public AppCollection()
     {
@@ -34,44 +35,61 @@ public partial class AppCollection : UserControl
 
         collectionIndex = collIndex;
 
+        CollectionId = collection.Guid;
         Collection = collection;
         CollectionTitle.Text = collectionTitle;
 
         if (collectionPackages != null)
         {
-            CollectionPackages = collectionPackages;
-            
-            foreach (PackageEntity package in collectionPackages)
-            {
-                AttachAppToCollection(package.Name, package.Guid, package.CollectionId ?? Guid.Empty, true);
-            }
+            Collection.Packages = collectionPackages;
         }
     }
     
-    public async void AttachAppToCollection(string appName, Guid pkgGuid, Guid collectionId, bool updateCollection)
+    public void RenderApps()
+    {
+        Apps.Children.Clear();
+
+        if (Collection?.Packages == null)
+            return;
+
+        foreach (var pkg in Collection.Packages)
+        {
+            AttachAppToCollection(pkg.Name, pkg.Guid, Collection.Guid);
+        }
+    }
+    
+    public async void AttachAppToCollection(string appName, Guid pkgGuid, Guid collectionId)
     {
         var dictionary = App.Packages.ToDictionary(x => x.Guid);
         PackageEntity pkg = dictionary.ContainsKey(pkgGuid) ? dictionary[pkgGuid] : null;
-
+    
         AppCollectionItem newApp = new(appName, pkgGuid, collectionId);
         
-        newApp.ControlAppInInstallationFooter(pkgGuid, collectionId);
-
-        newApp.OnRemoveFromCollection += () =>
+        newApp.ParentCollection = this;
+        newApp.UpdateVisual(pkgGuid);
+    
+        newApp.OnRemoveFromCollection += async () =>
         {
-            Apps.Children.Remove(newApp);
-            Collection.Packages.RemoveAll(p => p.Guid == pkgGuid);
-        };
-
-        if (updateCollection)
-        {
-            AddToCollectionCommand command = new(pkg.Guid, Collection.Guid);
+            var command = new PkgClearCollectionCommand(pkg);
             bool result = await App.Mediator.Send(command);
+            
+            if (!result) return;
+            
+            pkg.CollectionId = null;
+            Apps.Children.Remove(newApp);
+        };
+    
+        AddToCollectionCommand command = new(pkg.Guid, Collection.Guid);
+        bool result = await App.Mediator.Send(command);
 
-            if (result)
+        if (result)
+        {
+            if (!Collection.Packages.Any(x => x.Guid == pkg.Guid))
             {
-                Apps.Children.Add(newApp);
+                Collection.Packages.Add(pkg);
             }
+            
+            Apps.Children.Add(newApp);
         }
     }
     
@@ -86,52 +104,61 @@ public partial class AppCollection : UserControl
         App.Main.AppSearchWindow.ListAppsToCollect = new();
     }
     
-    private async void DeleteCollectionButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void DeleteCollectionButton_OnClick(
+        object? sender,
+        RoutedEventArgs e)
     {
-        // Delete Collection from DataBase
-        DeleteCollectionCommand command = new(Collection.Guid);
-        bool result = await App.Mediator.Send(command);
+        if (_isDeleting)
+            return;
 
-        if (result)
+        _isDeleting = true;
+
+        IsEnabled = false;
+
+        try
         {
-            var collectionQuery = App.Services.GetRequiredService<ICollectionQuery>();
-            App.Collections = collectionQuery.GetAll().ToList();
+            // Copy list before modifying
+            var packagesToRemove = Collection.Packages.ToList();
 
-            int currentColumn = Grid.GetColumn(this);
-
-            App.Main.CollectionList.Children.Remove(this);
-
-            foreach (Control coll in App.Main.CollectionList.Children)
+            foreach (var pkg in packagesToRemove)
             {
-                int elementColumn = Grid.GetColumn(coll);
-                if (elementColumn > currentColumn) Grid.SetColumn(coll, elementColumn - 1);
+                if (pkg == null) continue;
+
+                bool result = await App.Mediator.Send(new PkgClearCollectionCommand(pkg));
+
+                if (!result) return;
+                
+                // UI
+                pkg.CollectionId = null;
+                ClearPackageOnColletion(pkg);
             }
+
+            // DB
+            var command = new DeleteCollectionCommand(CollectionId);
+            await App.Mediator.Send(command);
             
-            // Remove all the apps in the deleted colletion from installation footer
-            App.Main.Footer.RemoveCollectionFromListToInstall(Collection);
-
-            if (App.Collections.Count <= 3) App.Main.AddNewCollection.IsVisible = true;
+            // Update UI
+            App.Main.LoadCollections();
         }
-        
-        // Update AddNewCollection Column
-        int newIndex = App.Collections.Count - 1;
-        
-        Grid.SetColumn(App.Main.AddNewCollection, newIndex + 1);
-
-        if (App.Collections.Count >= 4)
+        finally
         {
-            IsVisible = false;
+            _isDeleting = false;
+
+            IsEnabled = true;
         }
     }
     
-    public async void ClearPkgsOnColletion(PackageEntity package)
+    public async Task ClearPackageOnColletion(PackageEntity package)
     {
+        if (package == null) return;
+
         var command = new PkgClearCollectionCommand(package);
         var result = await App.Mediator.Send(command);
 
         if (result)
         {
             App.Main.Footer.RemoveAppFromListToInstall(package.Guid);
+            SelectionService.Deselect(package.Guid);
         }
     }
 

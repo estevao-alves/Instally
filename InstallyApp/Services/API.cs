@@ -5,7 +5,12 @@ namespace InstallyApp.DataServices;
 public static class API
 {
     public static string SiteUrl = "https://instally.app";
-    public static string BaseUrl = $"{SiteUrl}/api/packages";
+    
+    // DEV ONLY, Remove in production -----------
+    // public static string SiteUrl = "https://dev.instally.app";
+    // ------
+    
+    public static string BaseUrl = $"{SiteUrl}/api";
 
     public static async Task<string> Get(string pathname)
     {
@@ -21,6 +26,7 @@ public static class API
         catch (Exception ex)
         {
             Debug.WriteLine($"Exception: {ex.Message}");
+            Debug.WriteLine(BaseUrl + pathname);
             return null;
         }
     }

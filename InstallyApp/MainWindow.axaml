@@ -1,12 +1,12 @@
 <Window
     Background="{DynamicResource PrimaryBackground}"
-    Height="700"
     Icon="/Assets/instally-logo.ico"
     KeyDown="InputElement_OnKeyDown"
     MinHeight="540"
     MinWidth="820"
     Title="Instally"
-    Width="1200"
+    Height="700"
+    Width="1240"
     WindowStartupLocation="CenterScreen"
     x:Class="InstallyApp.MainWindow"
     xmlns="https://github.com/avaloniaui"
@@ -14,10 +14,21 @@
 
     <Grid Background="{DynamicResource PrimaryBackground}">
         <Grid RowDefinitions="*, auto" x:Name="LayoutMain">
+            <ProgressBar
+                BorderThickness="0"
+                Foreground="{DynamicResource PrimaryAction}"
+                Height="10"
+                Width="800"
+                IsIndeterminate="True"
+                IsVisible="True"
+                Margin="0,10,0,15"
+                x:Name="ProgressBar" />
+            
             <Grid
                 ColumnDefinitions="*, *, *, *"
                 Margin="18"
                 x:Name="CollectionList">
+                
                 <Grid.Styles>
                     <Style Selector="AppCollection">
                         <Setter Property="Margin" Value="0,0,10,0" />

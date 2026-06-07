@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -13,68 +14,6 @@ namespace InstallyApp.DataServices;
 
 public static class GetPackages
 {
-    public static List<PackageEntity> Packages { get; set; } = new List<PackageEntity>();
-
-    public static async Task<bool> LoadAPIPackages()
-{
-    // Load local packages
-    var localDataPkgs = App.Services.GetService<IPackageQuery>().GetAll().ToList();
-    Packages = localDataPkgs;
-
-    if (localDataPkgs.Count < 4000)
-    {
-        try
-        {
-            string apiPkgs = await API.Get("?limit=4315").ConfigureAwait(false);
-
-            List<PackageEntity> apiPackageEntities = Json.JsonToClassPkg(apiPkgs);
-
-            foreach (var apiPackage in apiPackageEntities)
-            {
-                // Check if the package already exists in local data by its GUID
-                var existingPackage = localDataPkgs.FirstOrDefault(p => p.Guid == apiPackage.Guid);
-
-                if (existingPackage != null)
-                {
-                    existingPackage.WingetId = apiPackage.WingetId;
-                    existingPackage.Name = apiPackage.Name;
-                    existingPackage.Publisher = apiPackage.Publisher;
-                    existingPackage.TagsString = apiPackage.TagsString;
-                    existingPackage.Description = apiPackage.Description;
-                    existingPackage.Site = apiPackage.Site;
-                    existingPackage.VersionsLength = apiPackage.VersionsLength;
-                    existingPackage.LatestVersion = apiPackage.LatestVersion;
-                    existingPackage.Score = apiPackage.Score;
-                }
-                else
-                {
-                    // Add new package with its GUID
-                    Packages.Add(apiPackage);
-                    
-                    App.Packages = Packages;
-                }
-            }
-
-            AddPackagesCommand command = new(Packages);
-            bool result = await App.Mediator.Send(command).ConfigureAwait(false);
-
-            if (result)
-            {
-                Packages = Packages.OrderBy(p => p.Name).ToList();
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error loading packages: {ex.Message}");
-            return false;
-        }
-    }
-    return true;
-}
-
-
     public static List<PackageEntity> CatchPackages(string? namePart, string? category, int offset, int limit)
     {
         string searchByName = string.Empty;
@@ -106,10 +45,6 @@ public static class GetPackages
 
                     return pkgFilteredByName && pkgFilteredByCategory;
                 }
-                else
-                {
-                    return pkgFilteredByName;
-                }
             }
 
             return pkgFilteredByName;
@@ -127,23 +62,59 @@ public static class GetPackages
         return apiPkgs;
     }
     
-    public static PackageEntity CatchPackages(Guid pkgGuid)
+    public static PackageEntity CatchPackage(Guid pkgGuid)
     {
-        PackageEntity pkg = Packages.Find(pkg => pkg.Guid == pkgGuid);
+        PackageEntity pkg = App.Packages.Find(pkg => pkg.Guid == pkgGuid);
         
         return pkg;
     }
 
     public static async Task<Control?> CatchPackagesFavicon(Guid pkgGuid)
     {
-        if (Packages is null) return null;
+        if (App.Packages is null) return null;
 
-        var dictionary = Packages.ToDictionary(x => x.Guid);
-        PackageEntity pkg = dictionary.ContainsKey(pkgGuid) ? dictionary[pkgGuid] : null;
+        var pkg = App.Packages.FirstOrDefault(p => p.Guid == pkgGuid);
         
         if (pkg is null) return null;
+        
+        Image image = new Image()
+        {
+            Name = "IconImage",
+            Height = 30,
+            Width = 30,
+        };
+        
+        string? packageId = null;
 
-        if (pkg.Site is null)
+        Bitmap? bitmap = null;
+
+        // Hosted icons first
+        pkg.PackageIds?.TryGetValue("Winget", out packageId);
+
+        if (!string.IsNullOrEmpty(packageId))
+        {
+            string faviconUrl = $"{API.SiteUrl}/icons/{packageId}.png";
+
+            bitmap = await LoadBitmapFromUrlAsync(faviconUrl);
+        }
+
+        // Fallback to Flatpak icon
+        if (bitmap == null && !string.IsNullOrEmpty(pkg.Icon))
+        {
+            bitmap = await LoadBitmapFromUrlAsync(pkg.Icon);
+        }
+
+        // Fallback to Google favicon
+        if (bitmap == null && !string.IsNullOrEmpty(pkg.Site))
+        {
+            string faviconUrl =
+                $"https://www.google.com/s2/favicons?domain={pkg.Site}&sz=256";
+
+            bitmap = await LoadBitmapFromUrlAsync(faviconUrl);
+        }
+        
+        // Fallback to Name Letter
+        if (bitmap == null)
         {
             TextBlock textBlock = new TextBlock()
             {
@@ -156,23 +127,10 @@ public static class GetPackages
 
             return textBlock;
         }
-        else
-        {
-            var urlDoFavicon = $"{API.SiteUrl}/icons/{pkg.WingetId}.png";
 
-            Image image = new Image()
-            {
-                Name = "IconImage",
-                Height = 30,
-                Width = 30,
-            };
+        image.Source = bitmap;
 
-            Bitmap bitmap = await LoadBitmapFromUrlAsync(urlDoFavicon);
-            
-            image.Source = bitmap;
-
-            return image;
-        }
+        return image;
     }
     
     public static async Task<Bitmap> LoadBitmapFromUrlAsync(string url)

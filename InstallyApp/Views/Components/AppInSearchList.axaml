@@ -51,7 +51,7 @@
                         Margin="-10,0"
                         MaxHeight="1200"
                         MaxLines="2"
-                        Text="Loading Application..."
+                        Text="Loading App..."
                         TextAlignment="Center"
                         TextTrimming="WordEllipsis"
                         TextWrapping="Wrap"

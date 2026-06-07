@@ -3,6 +3,7 @@ using Avalonia.Media;
 using InstallyAPI.Commands.PackageCommands;
 using InstallyAPI.Models;
 using InstallyApp.DataServices;
+using InstallyApp.Services;
 using InstallyApp.Views.Layout;
 
 namespace InstallyApp.Views.Components;
@@ -10,8 +11,9 @@ namespace InstallyApp.Views.Components;
 public partial class AppCollectionItem : UserControl
 {
     string _appName;
-    Guid AppGuid;
-    public PackageEntity SelectedWingetPackage;
+    public Guid AppGuid;
+    public PackageEntity SelectedPackage;
+    public AppCollection ParentCollection { get; set; }
 
     public delegate void RemoveFromCollection();
     public event RemoveFromCollection OnRemoveFromCollection;
@@ -30,81 +32,104 @@ public partial class AppCollectionItem : UserControl
     }
 
     public Guid CollectionId { get; set; }
-
-    public bool IsActive { get; set; }
     
+    public static event Action<Guid>? SelectionChanged;
+
     public AppCollectionItem()
     {
             InitializeComponent();
+            
+            SelectionService.SelectionChanged += OnSelectionChanged;
     }
     
     public AppCollectionItem(string appName, Guid appGuid, Guid collectionId) : this()
-        {
-            AppName = appName;
-            AppGuid = appGuid;
-            CollectionId = collectionId;
-            AdicionarIcone();
-        }
+    {
+        AppName = appName;
+        AppGuid = appGuid;
+        CollectionId = collectionId;
+        AddIcon();
+    }
 
-        public async void AdicionarIcone()
+    private void OnSelectionChanged(Guid pkgId)
+    {
+        if (pkgId == AppGuid)
         {
-            Control packagesFavicon = await GetPackages.CatchPackagesFavicon(AppGuid);
+            UpdateVisual(AppGuid);
+        }
+    }
+    
+    public async Task AddIcon()
+    {
+        Control packagesFavicon = await GetPackages.CatchPackagesFavicon(AppGuid);
+        WrapperAppIcon.Child = packagesFavicon;
+        
+        if (packagesFavicon is Image)
+        {
             WrapperAppIcon.Child = packagesFavicon;
+        }
+        else
+        {
+            // If it's not an Image, use app first letter
+            WrapperAppIcon.Child = new TextBlock()
+            {
+                Text = AppName.Substring(0, 1),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                FontSize = 30,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = (SolidColorBrush)App.Current.Resources["SecondaryText"],
+            };
+        }
+    }
+
+    public void UpdateVisual(Guid package)
+    {
+        bool isActive = SelectionService.IsSelected(package);
+
+        BorderWrapper.Background = isActive
+            ? (SolidColorBrush)App.Current.Resources["PrimaryBackground"]
+            : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+    }
+    
+    public void ToggleSelection(Guid package, Guid collectionId)
+    {
+        SelectionService.Toggle(package);
+
+        if (SelectionService.IsSelected(package))
+        {
+            var selectedPackage = GetPackages.CatchPackage(package);
             
-            if (packagesFavicon is Image)
+            if (selectedPackage != null)
             {
-                WrapperAppIcon.Child = packagesFavicon;
-            }
-            else
-            {
-                // If it's not an Image, use app first letter
-                WrapperAppIcon.Child = new TextBlock()
-                {
-                    Text = AppName.Substring(0, 1),
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    FontSize = 30,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = (SolidColorBrush)App.Current.Resources["SecondaryText"],
-                };
-            }
-        }
-
-        public void ControlAppInInstallationFooter(Guid package, Guid collectionId)
-        {
-            IsActive = !IsActive;
-
-            if (IsActive)
-            {
-                // Add to installation app footer
-                PackageEntity selectedPackage = GetPackages.CatchPackages(package);
-
-                if (selectedPackage != null)
-                {
-                    SelectedWingetPackage = selectedPackage;
-                    App.Main.Footer.AddAppToInstallationList(selectedPackage, collectionId);
-                }
+                SelectedPackage = selectedPackage;
                 
-                BorderWrapper.Background = (SolidColorBrush)App.Current.Resources["PrimaryBackground"];
-            }
-            else
-            {
-                // Remove from installation app footer
-                if (SelectedWingetPackage is not null) App.Main.Footer.RemoveAppFromListToInstall(SelectedWingetPackage.Guid);
-                
-                BorderWrapper.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+                if (App.Main.Footer.AppsListToInstall.Any(x => x.Package.Guid == package)) return;
+                App.Main.Footer.AddAppToInstallationList(selectedPackage, collectionId);
             }
         }
-
-        private void AppItem_PointerPressed(object sender, PointerPressedEventArgs e)
+        else
         {
-            ControlAppInInstallationFooter(AppGuid, CollectionId);
+            App.Main.Footer.RemoveAppFromListToInstall(package);
         }
 
-        private void RemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            App.Main.AppCollection.ClearPkgsOnColletion(GetPackages.CatchPackages(AppGuid));
+        UpdateVisual(package);
+    }
 
-            OnRemoveFromCollection();
-        }
+    private void AppItem_PointerPressed(object sender, PointerPressedEventArgs e)
+    {
+        ToggleSelection(AppGuid, CollectionId);
+    }
+
+    private async void RemoveButton_Click(object sender, RoutedEventArgs e)
+    {
+        var pkg = GetPackages.CatchPackage(AppGuid);
+
+        if (pkg == null || ParentCollection == null) return;
+
+        App.Main.AppCollection.ClearPackageOnColletion(pkg);
+        
+        await ParentCollection?.ClearPackageOnColletion(pkg);
+        
+        OnRemoveFromCollection?.Invoke();
+    }
 }

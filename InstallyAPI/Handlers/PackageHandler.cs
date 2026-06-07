@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Instally.App.Application;
 using InstallyAPI.Commands.PackageCommands;
 using InstallyAPI.Models;
 using InstallyAPI.Queries.Interfaces;
@@ -25,9 +24,38 @@ public class PackageHandler : IRequestHandler<AddPackagesCommand, bool>, IReques
     {
         foreach (PackageEntity pkg in message.Packages)
         {
-            PackageEntity package = new(pkg.Guid, pkg.WingetId, pkg.Name, pkg.Publisher, pkg.Tags, pkg.Description, pkg.Site, pkg.VersionsLength, pkg.LatestVersion, pkg.Score);
+            var existing = await _packageQuery.GetById(pkg.Guid);
 
-            _packageRepository.Add(package);
+            
+            if (existing != null)
+            {
+                existing.Name = pkg.Name;
+                existing.Publisher = pkg.Publisher;
+                existing.TagsString = pkg.TagsString;
+                existing.Description = pkg.Description;
+                existing.Site = pkg.Site;
+                existing.Icon = pkg.Icon;
+                existing.Screenshots = pkg.Screenshots;
+                existing.VersionsLength = pkg.VersionsLength;
+                existing.LatestVersion = pkg.LatestVersion;
+                existing.Score = pkg.Score;
+
+                // Safe dictionary handling
+                if (existing.PackageIds == null)
+                    existing.PackageIds = new Dictionary<string, string>();
+
+                if (pkg.PackageIds != null)
+                {
+                    foreach (var kvp in pkg.PackageIds)
+                    {
+                        existing.PackageIds[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+            else
+            {
+                _packageRepository.Add(pkg);
+            }
         }
 
         return await _packageRepository.UnitOfWork.Save();
@@ -41,19 +69,26 @@ public class PackageHandler : IRequestHandler<AddPackagesCommand, bool>, IReques
             
             package.CollectionId = message.CollectionId;
 
-            _packageRepository.Update(package);
-
             return await _packageRepository.UnitOfWork.Save();
         }
 
         return false;
     }
     
-    public async Task<bool> Handle(PkgClearCollectionCommand message, CancellationToken cancellationToken)
+    public async Task<bool> Handle(
+        PkgClearCollectionCommand message,
+        CancellationToken cancellationToken)
     {
-        message.Package.CollectionId = null;
-        _packageRepository.Update(message.Package);
+        var package = await _packageQuery
+            .GetById(message.Package.Guid);
 
-        return await _packageRepository.UnitOfWork.Save();
+        if (package == null)
+            return false;
+
+        package.CollectionId = null;
+
+        return await _packageRepository
+            .UnitOfWork
+            .Save();
     }
 }

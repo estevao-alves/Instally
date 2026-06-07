@@ -1,10 +1,24 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace InstallyAPI.Models
 {
     public class PackageEntity : BaseEntity
     {
-        public string WingetId { get; set; }
+        // use dictionary for IDs
+
+        public string PackageIdsJson { get; set; } = "{}";
+
+        [NotMapped]
+        public Dictionary<string, string> PackageIds
+        {
+            get => string.IsNullOrEmpty(PackageIdsJson)
+                ? new Dictionary<string, string>()
+                : JsonSerializer.Deserialize<Dictionary<string, string>>(PackageIdsJson)!;
+
+            set => PackageIdsJson = JsonSerializer.Serialize(value);
+        }
+        
         public string Name { get; set; }
         public string Publisher { get; set; }
 
@@ -17,6 +31,8 @@ namespace InstallyAPI.Models
         public string TagsString { get; set; }
         public string Description { get; set; }
         public string? Site { get; set; }
+        public string? Icon { get; set; }
+        public List<string>? Screenshots { get; set; }
         public int VersionsLength { get; set; }
         public string LatestVersion { get; set; }
         public double Score { get; set; }
@@ -28,25 +44,21 @@ namespace InstallyAPI.Models
 
         public PackageEntity() { }
 
-        // Constructor that accepts a GUID
-        public PackageEntity(Guid guid, string wingetId, string name, string publisher, string[] tags, string description, string site, int versionsLength, string latestVersion, double score)
+        public PackageEntity(Guid guid, Dictionary<string, string> packageIds, string name, string publisher, string[] tags, string description, string site, string icon, List<string> screenshots, int versionsLength, string latestVersion, double score)
             : this()
         {
-            SetGuid(guid); // Use the provided GUID
-            WingetId = wingetId;
+            SetGuid(guid);
+            PackageIds = packageIds;
             Name = name;
             Publisher = publisher;
             Tags = tags;
             Description = description;
             Site = site;
+            Icon = icon;
+            Screenshots = screenshots;
             VersionsLength = versionsLength;
             LatestVersion = latestVersion;
             Score = score;
-        }
-
-        public void AtualizarCollection(Guid collectionId)
-        {
-            CollectionId = collectionId;
         }
     }
 }

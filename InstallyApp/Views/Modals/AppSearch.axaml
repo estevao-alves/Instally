@@ -18,7 +18,7 @@
         <Border
             Background="{DynamicResource SecondaryBackground}"
             CornerRadius="10"
-            Margin="100"
+            Margin="50"
             Padding="20">
             <Grid ColumnDefinitions="*, *" RowDefinitions="40, *, 40">
 
@@ -55,9 +55,17 @@
                     <Dropdown
                         ItemsSource="{Binding Categories}"
                         Margin="20,0"
+                        MinWidth="130"
                         SelectedItem="{Binding SelectedCategoryName, Mode=TwoWay}"
                         SelectionChanged="ComboBoxCategory_OnSelectionChanged"
                         x:Name="ComboBoxCategory" />
+                    
+                    <Button
+                        Content="{Binding CurrentSource,
+                                  TargetNullValue=Apps in Flatpak,
+                                  StringFormat='Apps in {0}'}"
+                        Margin="10,0"
+                        IsEnabled="False" />
                 </StackPanel>
 
                 <Grid

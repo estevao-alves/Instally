@@ -5,9 +5,16 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>InstallyAPI</RootNamespace>
+        
+<!--        <TrimMode>partial</TrimMode>-->
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <SelfContained>true</SelfContained>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <InvariantGlobalization>true</InvariantGlobalization>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.2.1" />
         <PackageReference Include="FluentValidation" Version="11.11.0" />
         <PackageReference Include="MediatR" Version="12.4.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.11" />
@@ -21,12 +28,6 @@
 
     <ItemGroup>
       <Folder Include="Migrations\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="InstallyData.db">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>

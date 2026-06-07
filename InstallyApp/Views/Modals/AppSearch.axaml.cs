@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using InstallyAPI.Commands.CollectionCommands;
 using InstallyAPI.Commands.PackageCommands;
 using InstallyAPI.Models;
 using InstallyApp.DataServices;
@@ -27,6 +28,8 @@ public partial class AppSearch : UserControl
     
     public ObservableCollection<string> Categories { get; private set; } = new();
     
+    public string CurrentSource { get; set; } = PlatformService.PackageSource;
+
     public Dictionary<string, List<string>> CategoriesDict { get; set; }
     
     public string SelectedCategoryName  { get; set; }
@@ -112,7 +115,15 @@ public partial class AppSearch : UserControl
 
         foreach (PackageEntity package in PackagesFound)
         {
-            AppInSearchList app = new(package.Name, package.Guid, AppInSearchList.VerifyAppAdded(package.Guid) is not null);
+            if (!PlatformService.IsPackageSupported(package))
+                continue;
+
+            AppInSearchList app = new(
+                package.Name,
+                package.Guid,
+                AppInSearchList.VerifyAppAdded(package.Guid) is not null
+            );
+
             AppList.Children.Add(app);
         }
     }
@@ -142,7 +153,7 @@ public partial class AppSearch : UserControl
     public Button AddApp(PackageEntity pkg)
     {
         ListAppsToCollect.Add(
-            new Footer.AppToInstall(pkg.Name, pkg.WingetId,pkg.Guid, App.Main.SelectedCollection.Collection.Guid));
+            new Footer.AppToInstall(pkg, App.Main.SelectedCollection.Collection.Guid));
         
         Button borderWrapper = new();
 
@@ -169,9 +180,17 @@ public partial class AppSearch : UserControl
         return borderWrapper;
     }
 
-    public void RemoverApp(Button appItemWithBorder, string wingetId)
+    public void RemoverApp(Button appItemWithBorder, Dictionary<string, string> packageId)
     {
-        ListAppsToCollect = ListAppsToCollect.FindAll(item => item.WingetId != wingetId);
+        var source = PlatformService.PackageSource;
+
+        if (!packageId.TryGetValue(source, out var targetId))
+            return;
+
+        ListAppsToCollect = ListAppsToCollect.FindAll(item =>
+            !item.Package.PackageIds.TryGetValue(source, out var id) || id != targetId
+        );
+
         SearchAppsSelected.Children.Remove(appItemWithBorder);
     }
     
@@ -203,21 +222,35 @@ public partial class AppSearch : UserControl
     
     private void AppList_OnSizeChanged(object? sender, SizeChangedEventArgs e) => AppList_ChangeColumns();
 
-    private async void AddApps_OnClick(object? sender, RoutedEventArgs e)
+    private async void AddApps_OnClick(
+        object? sender,
+        RoutedEventArgs e)
     {
-        foreach (Footer.AppToInstall appsToCollect in ListAppsToCollect)
-        {
-            PackageEntity package = App.Packages.Where(p => p.WingetId == appsToCollect.WingetId).FirstOrDefault();
-            
-            App.Main.SelectedCollection.CollectionPackages.Add(package);
-            
-            AddToCollectionCommand command = new(appsToCollect.PackageGuid, App.Collections[0].Guid);
-            bool result = await App.Mediator.Send(command);
-        }
-        
-        App.Main.AddAppsToCollection(ListAppsToCollect, App.Main.SelectedCollection, App.Collections[0].Guid);
+        var packageGuids = ListAppsToCollect
+            .Select(x => x.Package.Guid)
+            .ToList();
 
-        App.Main.AppSearchWindow.SearchAppsSelected.Children.Clear();
+        AddManyToCollectionCommand command =
+            new(packageGuids, App.Collections[0].Guid);
+
+        bool result = await App.Mediator.Send(command);
+
+        if (!result)
+            return;
+
+        // FAST incremental UI update
+        foreach (var app in ListAppsToCollect)
+        {
+            App.Main.SelectedCollection.AttachAppToCollection(
+                app.Package.Name,
+                app.Package.Guid,
+                App.Collections[0].Guid);
+        }
+
+        App.Main.AppSearchWindow
+            .SearchAppsSelected
+            .Children
+            .Clear();
 
         App.Main.Modals.Children.Clear();
     }

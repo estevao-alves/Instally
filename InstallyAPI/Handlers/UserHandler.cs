@@ -1,6 +1,4 @@
-﻿using Instally.App.Application;
-using MediatR;
-using System.Data;
+﻿using MediatR;
 using InstallyAPI.Commands.UserCommands;
 using InstallyAPI.Models;
 using InstallyAPI.Queries.Interfaces;

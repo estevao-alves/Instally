@@ -9,4 +9,7 @@ public interface IRestDataService
     Task AddUserAsync(UserEntity toDo);
     Task UpdateUserAsync(UserEntity toDo);
     Task DeleteUserAsync(Guid id);
+    
+    Task<List<PackageEntity>> GetAllPackagesAsync();
+    Task<List<CollectionEntity>> GetAllCollectionsAsync();
 }

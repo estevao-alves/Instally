@@ -9,8 +9,11 @@
 
         public UserEntity(string email, string password)
         {
+            Guid = Guid.NewGuid();
             Email = email;
             Password = password;
+            CreatedAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
         }
         
         public UserEntity() { }

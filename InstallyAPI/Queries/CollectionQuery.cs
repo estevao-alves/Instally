@@ -1,6 +1,7 @@
 ﻿using InstallyAPI.Data;
 using InstallyAPI.Models;
 using InstallyAPI.Queries.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace InstallyAPI.Queries
 {
@@ -15,12 +16,15 @@ namespace InstallyAPI.Queries
 
         public IQueryable<CollectionEntity> GetAll()
         {
-            return _appRepository.Collections.AsQueryable();
+            return _appRepository.Collections
+                .Include(c => c.Packages);
         }
 
         public async Task<CollectionEntity> GetById(Guid id)
         {
-            return await _appRepository.Set<CollectionEntity>().FindAsync(id);
+            return await _appRepository.Collections
+                .Include(c => c.Packages)
+                .FirstOrDefaultAsync(c => c.Guid == id);
         }
     }
 }

@@ -1,7 +1,10 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using Avalonia.Input;
 using DynamicData;
+using InstallyAPI.Commands.CollectionCommands;
 using InstallyAPI.Commands.PackageCommands;
 using InstallyAPI.Models;
 using InstallyAPI.Queries.Interfaces;
@@ -13,7 +16,7 @@ using InstallyApp.Views.Items;
 using InstallyApp.Views.Layout;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui;
-using AppSearch = InstallyApp.Pages.AppSearch;
+using Avalonia.Diagnostics;
 
 namespace InstallyApp
 {
@@ -30,84 +33,149 @@ namespace InstallyApp
         {
             App.Main = this;
             InitializeComponent();
-
-            GetPackages.LoadAPIPackages();
+            
             PointerPressed += ClearFocus;
+
+            CollectionList.Children.Clear();
             
             if (!Design.IsDesignMode)
             {
                 InitializeServices();
             }
+            
+            // Command output window = Ctrl + Shift + T
+            // Css-like UI Window = F12
+            #if DEBUG
+            this.AttachDevTools();
+            #endif
         }
         
         private void ClearFocus(object? sender, PointerPressedEventArgs e) => HiddenButtonToFocus.Focus();
         
-        public void InitializeServices()
+        public async Task InitializeServices()
         {
-            Login = new();
-
-            UserEntity user = App.Services.GetService<IUserQuery>().GetAll().FirstOrDefault();
-
-            if (user is not null) App.UserAuthenticated = user;
-            else App.Main.Modals.Children.Add(Login);
-
-            var packagesQuery = App.Services.GetService<IPackageQuery>();
-            App.Packages = packagesQuery.GetAll().ToList();
+            ProgressBar.IsVisible = true;
+            await Task.Yield();
             
-            AppSearchWindow = new AppSearch();
+            // Services
+            try
+            {
+                var apiHost = App.Services.GetRequiredService<ApiHostService>();
+                await apiHost.StartAsync();
 
-            LoadCollections();
+                await Task.Yield();
+                
+                Login = new();
+                await LoadUsers();
+
+                await LoadPackages();
+
+                AppSearchWindow = new AppSearch();
+
+                LoadCollections();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
+            //
+            
+            ProgressBar.IsVisible = false;
+        }
+        
+        public async Task LoadPackages()
+        {
+            await Task.Run(async () =>
+            {
+                var collectionQuery = App.Services.GetRequiredService<ICollectionQuery>();
+                App.Collections = collectionQuery.GetAll().ToList();
+
+                var packagesQuery = App.Services.GetRequiredService<IPackageQuery>();
+                App.Packages = packagesQuery.GetAll().ToList();
+
+                if (App.Packages.Count < 4000)
+                {
+                    using var scope = App.Services.CreateScope();
+                    var sync = scope.ServiceProvider.GetRequiredService<SyncService>();
+
+                    await sync.SyncPackages();
+                }
+            });
+        }
+        
+        private async Task LoadUsers()
+        {
+            var api = new ApiService();
+            var users = await api.GetUsers();
+
+            Users = new ObservableCollection<UserEntity>(users);
+            
+            // Login First User
+            if (Users is not null) App.UserAuthenticated = Users.FirstOrDefault();
+            else App.Main.Modals.Children.Add(Login);
+            //
         }
 
         public void LoadCollections()
         {
-            AddNewCollection = new AddNewCollection();
-            
             CollectionList.Children.Clear();
-            
-            App.Collections = App.Services.GetService<ICollectionQuery>().GetAll().ToList();
-            List<CollectionEntity> appCollections = App.Collections;
-            
-            AddNewCollection.IsVisible = false;
-            CollectionList.Children.Add(AddNewCollection);
 
-            if (!appCollections.Any())
+            var collections = App.Services
+                .GetRequiredService<ICollectionQuery>()
+                .GetAll()
+                .OrderBy(c => c.CreatedAt)
+                .ToList();
+
+            var packages = App.Services
+                .GetRequiredService<IPackageQuery>()
+                .GetAll()
+                .ToList();
+
+            // Rebuild package lists from Package.CollectionId
+            foreach (var collection in collections)
             {
+                collection.Packages = packages
+                    .Where(p => p.CollectionId == collection.Guid)
+                    .ToList();
+            }
+
+            App.Collections = collections;
+
+            if (collections.Count == 0)
+            {
+                AddNewCollection = new AddNewCollection();
+
+                CollectionList.Children.Add(AddNewCollection);
+
                 AddNewCollection.AddDefaultCollection();
 
-                AddNewCollection.IsVisible = true;
-                Grid.SetColumn(AddNewCollection, 1);
+                return;
             }
-            else
+
+            for (int i = 0; i < collections.Count; i++)
             {
-                for (int i = 0; i < appCollections.Count; i++)
-                {
-                    AppCollection currentCollection = new(i, appCollections[i].Title, appCollections[i].Packages, appCollections[i]);
-                    /*
-                    SelectedCollection = currentCollection;
-                    */
-                    CollectionList.Children.Add(currentCollection);
+                var collection = new AppCollection(
+                    i,
+                    collections[i].Title,
+                    collections[i].Packages,
+                    collections[i]);
 
-                    Grid.SetColumn(currentCollection, i);
-                }
+                collection.RenderApps();
 
-                if(appCollections.Count < 4)
-                {
-                    AddNewCollection.IsVisible = true;
-                    Grid.SetColumn(AddNewCollection, appCollections.Count);
-                }
+                CollectionList.Children.Add(collection);
+
+                Grid.SetColumn(collection, i);
             }
+
+            AddNewCollection = new AddNewCollection();
+
+            AddNewCollection.IsVisible = collections.Count < 4;
+
+            CollectionList.Children.Add(AddNewCollection);
+
+            Grid.SetColumn(AddNewCollection, collections.Count);
         }
-        
-        public async void AddAppsToCollection(List<Footer.AppToInstall> list, AppCollection componentCollection, Guid collectionId)
-        {
-            foreach (Footer.AppToInstall app in list)
-            {
-                AddToCollectionCommand command = new(app.PackageGuid, collectionId);
-                bool resultado = await App.Mediator.Send(command);
-                
-                componentCollection.AttachAppToCollection(app.Name, app.PackageGuid, collectionId, true);}
-            }
 
         private void InputElement_OnKeyDown(object? sender, KeyEventArgs e)
         {

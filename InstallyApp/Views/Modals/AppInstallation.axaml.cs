@@ -1,192 +1,448 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Threading;
+using System.IO;
 using InstallyApp.Utils.Functions;
 using InstallyApp.Views.Layout;
+using Avalonia.Media;
+using InstallyAPI.Models;
+using InstallyApp.DataServices;
+using InstallyApp.Services;
 
 namespace InstallyApp.Pages
 {
     public partial class AppInstallation : UserControl
     {
         public List<Footer.AppToInstall> AppsListToInstall { get; set; } = new();
-        public EnumState CurrentState { get; private set; }
-
-        public enum EnumState
+        public InstallationState CurrentState { get; private set; }
+        
+        public enum InstallationState
         {
             Checking,
-            Waiting,
             Installing,
+            Paused,
             Error
         }
-
-        private readonly Dictionary<EnumState, Action<string, bool>> _stateHandlers;
-
+        
+        public enum DialogButtonType
+        {
+            Continue,
+            Retry,
+            Completed,
+            Notice
+        }
+        
         public AppInstallation()
         {
             DataContext = this;
             InitializeComponent();
-
-            _stateHandlers = new Dictionary<EnumState, Action<string, bool>>
-            {
-                { EnumState.Checking, HandleCheckingState },
-                { EnumState.Waiting, HandleWaitingState },
-                { EnumState.Installing, HandleInstallingState },
-                { EnumState.Error, HandleErrorState }
-            };
         }
-
-        public void SetInstallationState(EnumState state, string details = "", bool inProgress = true)
+        
+        // --- Main Workflow Methods
+        public void SetInstallationState(
+            InstallationState state,
+            string title = "",
+            string details = "",
+            bool inProgress = true,
+            DialogButtonType dialogType = DialogButtonType.Continue)
         {
             CurrentState = state;
 
-            if (_stateHandlers.TryGetValue(state, out var handler))
-            {
-                handler.Invoke(details, inProgress);
-            }
-            else
-            {
-                throw new InvalidOperationException($"State '{state}' is not handled.");
-            }
+            ApplyStateUI(state, title, details);
+            if (!inProgress) ApplyDialogButtonTypeUI(dialogType);
         }
-
-        private void HandleCheckingState(string details, bool inProgress)
-        {
-            UpdateUIState("Checking...", details, 14, showProgressBar: true, showButtons: false);
-        }
-
-        private void HandleWaitingState(string details, bool inProgress)
-        {
-            UpdateUIState("", details, 18, showProgressBar: false, showButtons: true);
-            Confirm.IsVisible = true;
-            /*Cancel.IsVisible = true;*/
-        }
-
-        private void HandleInstallingState(string details, bool inProgress)
-        {
-            UpdateUIState("Installing...", details, 14, showProgressBar: true, showButtons: false);
-        }
-
-        private void HandleErrorState(string details, bool inProgress)
-        {
-            UpdateUIState("Installation error", details, 14, showProgressBar: false, showButtons: true);
-        }
-
-        private void UpdateUIState(string title, string details, double fontSize, bool showProgressBar, bool showButtons)
-        {
-            Title.Text = title;
-            Title.IsVisible = !string.IsNullOrWhiteSpace(title);
-            TextDetails.Text = details;
-            TextDetails.FontSize = fontSize;
-            ProgressBar.IsVisible = showProgressBar;
-            Buttons.IsVisible = showButtons;
-        }
-
-        private Task<bool> WaitForUserConfirmation(string message)
-        {
-            var tcs = new TaskCompletionSource<bool>();
-
-            // Show the message and bind actions to Confirm and Cancel buttons
-            SetInstallationState(EnumState.Waiting, message);
-
-            Confirm.Click += (sender, e) =>
-            {
-                tcs.TrySetResult(true);
-
-            };
-
-            Cancel.Click += (sender, e) =>
-            {
-                tcs.TrySetResult(false);
-            };
-
-            return tcs.Task;
-        }
-
-        public async Task StartVerification()
+        
+        public async Task StartChecking()
         {
             App.Main.Modals.Children.Add(this);
-            SetInstallationState(EnumState.Checking);
+            
+            SetInstallationState(InstallationState.Checking);
 
             if (AppsListToInstall.Count == 0)
             {
-                await ShowMessageAndClose("Select at least one app to install.");
+                SetInstallationState(InstallationState.Paused);
+                await WaitForUserConfirmation("Select at least one app to install", "", DialogButtonType.Notice);
+
                 return;
             }
 
             List<string> alreadyInstalledApps = new();
+            
+            var packageSource = PlatformService.PackageSource;
+
+            AssureFlatpakIsReady();
 
             for (int i = 0; i < AppsListToInstall.Count; i++)
             {
                 var app = AppsListToInstall[i];
-                TextDetails.Text = $"{app.Name} ({i + 1}/{AppsListToInstall.Count})";
-                string result = await Command.Execute("cmd.exe", $"/c {Command.wingetExe} list -q {app.WingetId} --accept-source-agreements");
+                SetInstallationState(InstallationState.Checking, $"{app.Package.Name}", $"Checking ({i + 1}/{AppsListToInstall.Count})");
 
-                if (result.Contains(app.WingetId))
+                string packageId = GetPackageId(app);
+                CommandResult result;
+                
+                if (packageSource == "Winget")
                 {
-                    alreadyInstalledApps.Add(app.WingetId);
+                    result = await Command.Execute("winget", $"list -q {packageId} --accept-source-agreements");
+                }
+                else if (packageSource == "Flatpak")
+                {
+                    result = await Command.Execute("flatpak", "list");
+                }
+                else
+                {
+                    throw new Exception($"Unsupported package manager: {packageSource}");
+                }
+
+                if (!string.IsNullOrEmpty(packageId) && result.Output.Contains(packageId))
+                {
+                    alreadyInstalledApps.Add(packageId);
                 }
             }
 
             if (AppsListToInstall.Count == alreadyInstalledApps.Count)
             {
-                await ShowMessageAndClose("All selected apps are already installed.");
+                SetInstallationState(InstallationState.Paused);
+                await WaitForUserConfirmation("All selected apps are already installed", "", DialogButtonType.Notice);
+
                 return;
             }
 
             if (alreadyInstalledApps.Count > 0)
             {
-                string message = $"{alreadyInstalledApps.Count} app{(alreadyInstalledApps.Count > 1 ? "s" : "")} already installed, {AppsListToInstall.Count - alreadyInstalledApps.Count} to go. \nContinue the installation?";
-                if (!await WaitForUserConfirmation(message)) return;
+                SetInstallationState(InstallationState.Paused);
+                
+                string title = $"{alreadyInstalledApps.Count} app{(alreadyInstalledApps.Count > 1 ? "s" : "")} already installed, {AppsListToInstall.Count - alreadyInstalledApps.Count} to go.";
+                string details = "Continue installation?";
+                if (!await WaitForUserConfirmation(title, details, DialogButtonType.Continue))
+                    return;
             }
 
-            var appsToInstall = AppsListToInstall.FindAll(app => !alreadyInstalledApps.Contains(app.WingetId));
+            var appsToInstall = AppsListToInstall.FindAll(app =>
+            {
+                var id = GetPackageId(app);
+                return !alreadyInstalledApps.Contains(id);
+            });
+            
             await StartInstallation(appsToInstall);
         }
 
         private async Task StartInstallation(List<Footer.AppToInstall> apps)
         {
-            SetInstallationState(EnumState.Installing);
+            List<PackageEntity> failedApps = new List<PackageEntity>();
+            
+            for (int i = 0; i < apps.Count; i++)
+            {
+                var app = apps[i];
+                
+                try
+                {
+                    SetInstallationState(InstallationState.Installing, $"{app.Package.Name}", $"Installing ({i + 1}/{apps.Count})", inProgress: true);
+
+                    ProgressBar.Value = ((i + 1) * 100) / apps.Count;
+                    string packageId = GetPackageId(app);
+                    CommandResult result;
+
+                    var packageManager = PlatformService.PackageSource;
+                    
+                    if (packageManager == "Winget")
+                    {
+                        result = await Command.Execute("winget",
+                            $"install {packageId} --accept-source-agreements --accept-package-agreements");
+                    }
+                    else if (packageManager == "Flatpak")
+                    {
+                        result = await Command.Execute("flatpak", $"install -y flathub {packageId}");
+                    }
+                    else
+                    {
+                        throw new Exception($"Unsupported package manager: {packageManager}");
+                    }
+                    
+                    if (result.ExitCode != 0 || string.IsNullOrEmpty(packageId) || !result.Output.Contains(packageId))
+                    {
+                        throw new Exception($"{result.Command}\n\t{result.Output}\n\t{result.Error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SetInstallationState(InstallationState.Error, ex.Message);
+                    
+                    failedApps.Add(apps[i].Package);
+                    
+                    if (apps.Count == 1)
+                    {
+                        await WaitForUserConfirmation($"{app.Package.Name} was not installed", $"{ex.Message}", DialogButtonType.Notice);
+                    }
+                    else
+                    {
+                        bool goToNextApp = await WaitForUserConfirmation($"{app.Package.Name} was not installed", $"{ex.Message}", DialogButtonType.Retry);
+                        
+                        if (goToNextApp) continue;
+                        
+                        failedApps.Remove(apps[i].Package);
+                        i--;
+                    }
+                }
+            }
+            
+            SetInstallationState(InstallationState.Paused);
+
+            var successfulApps = apps.FindAll(app => !failedApps.Contains(app.Package));
+            
+            if (failedApps.Count == apps.Count)
+            {
+                await WaitForUserConfirmation(
+                    "Installation failed",
+                    failedApps.Count > 1
+                        ? $"None of the {apps.Count} selected apps could be installed"
+                        : $"{failedApps.First().Name} could not be installed",
+                    DialogButtonType.Notice);
+
+                return;
+            }
+
+            string title = successfulApps.Count switch
+            {
+                1 => $"{successfulApps[0].Package.Name} was successfully installed!",
+                _ when failedApps.Count == 0 => "All apps were successfully installed!",
+                _ => $"{successfulApps.Count} apps were successfully installed!"
+            };
+
+            string details = failedApps.Count switch
+            {
+                0 => "",
+                1 => $"{failedApps[0].Name} failed",
+                _ => $"{failedApps[0].Name} + {failedApps.Count - 1} more failed"
+            };
+
+            await WaitForUserConfirmation(
+                title,
+                details,
+                DialogButtonType.Completed);
+            
+            foreach (var app in successfulApps)
+            {
+                SelectionService.Deselect(app.Package.Guid);
+            }
+            
+            App.Main.Footer.RemoveAppsFromListToInstall(successfulApps.Select(x => x.Package.Guid));
+        }
+        //
+        
+        // --- Modal UI Management
+        private Task<bool> WaitForUserConfirmation(
+            string title,
+            string details,
+            DialogButtonType type
+        )
+        {
+            var tcs = new TaskCompletionSource<bool>();
+
+            ApplyDialogContentUI(title, details);
+            ApplyDialogButtonTypeUI(type);
+
+            void ConfirmHandler(object? sender, RoutedEventArgs e)
+            {
+                Confirm.Click -= ConfirmHandler;
+                Cancel.Click -= CancelHandler;
+                
+                if (type == DialogButtonType.Completed || type == DialogButtonType.Notice) App.Main.Modals.Children.Clear();
+                
+                tcs.TrySetResult(true);
+            }
+
+            void CancelHandler(object? sender, RoutedEventArgs e)
+            {
+                Confirm.Click -= ConfirmHandler;
+                Cancel.Click -= CancelHandler;
+                
+                if (type != DialogButtonType.Retry) App.Main.Modals.Children.Clear();
+                
+                tcs.TrySetResult(false);
+            }
+
+            Confirm.Click += ConfirmHandler;
+            Cancel.Click += CancelHandler;
+
+            return tcs.Task;
+        }
+        //
+        
+        // --- UI State Methods
+        private void ApplyStateUI(
+            InstallationState state,
+            string title,
+            string details)
+        {
+
+            ApplyDialogContentUI(title, details);
+            ResetStateUI();
+            
+            switch (state)
+            {
+                case InstallationState.Checking:
+                case InstallationState.Installing:
+                    ProgressBar.IsVisible = true;
+                    Buttons.IsVisible = false;
+                    break;
+                
+                case InstallationState.Paused:
+                    break;
+
+                case InstallationState.Error:
+                    TextDetails.IsEnabled = true;
+                    TextDetails.FontSize = 14;
+                    TextDetails.TextAlignment = TextAlignment.Left;
+                    TextDetails.Foreground = (SolidColorBrush)App.Current.Resources["SecondaryText"];
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"State '{state}' is not handled.");
+            }
+        }
+        
+        private void ApplyDialogButtonTypeUI(DialogButtonType type)
+        {
+            Buttons.IsVisible = true;
+            Confirm.IsVisible = true;
+            Cancel.IsVisible = true;
+
+            Confirm.Classes.Clear();
+            Cancel.Classes.Clear();
+
+            // Default button style
+            Confirm.Classes.Add("action");
+            Confirm.Classes.Add("text-only");
+
+            Cancel.Classes.Add("base");
+            Cancel.Classes.Add("text-only");
+
+            switch (type)
+            {
+                case DialogButtonType.Continue:
+                    Cancel.Content = "Cancel";
+                    Confirm.Content = "Continue";
+                    break;
+
+                case DialogButtonType.Retry:
+                    Cancel.Content = "Retry";
+                    Confirm.Content = "Go to next app";
+                    break;
+
+                case DialogButtonType.Completed:
+                    Confirm.Content = "Confirm";
+                    Cancel.IsVisible = false;
+
+                    Confirm.Classes.Clear();
+                    Confirm.Classes.Add("positive");
+                    break;
+
+                case DialogButtonType.Notice:
+                    Confirm.Content = "Close";
+                    Cancel.IsVisible = false;
+                    break;
+            }
+        }
+        
+        private void ApplyDialogContentUI(string title, string details)
+        {
+            Title.Text = title;
+            Title.IsVisible = !string.IsNullOrWhiteSpace(title);
+
+            DetailsScrollViewer.IsVisible = !string.IsNullOrWhiteSpace(details);
+            TextDetails.IsVisible = !string.IsNullOrWhiteSpace(details);
+            TextDetails.Text = details;
+        }
+        
+        private void ResetStateUI()
+        {
+            ProgressBar.IsVisible = false;
+            Buttons.IsVisible = false;
+
+            TextDetails.FontSize = 15;
+            TextDetails.IsEnabled = false;
+            TextDetails.TextAlignment = TextAlignment.Center;
+        }
+        //
+        
+        // --- Helper Methods
+        private string? GetPackageId(Footer.AppToInstall app)
+        {
+            var source = PlatformService.PackageSource;
+
+            return app.Package.PackageIds.TryGetValue(source, out var id)
+                ? id
+                : null;
+        }
+
+        private async Task AssureFlatpakIsReady()
+        {
+            if (!OperatingSystem.IsLinux()) return;
 
             try
             {
-                for (int i = 0; i < apps.Count; i++)
+                var result = await Command.Execute("flatpak", "--version");
+                
+                if (result.ExitCode != 0)
                 {
-                    var app = apps[i];
-                    SetInstallationState(EnumState.Installing, $"{app.Name} ({i + 1}/{apps.Count})", inProgress: true);
+                    SetInstallationState(InstallationState.Error);
+                    
+                    bool install = await WaitForUserConfirmation(
+                        "Flatpak wasn't found.\n" +
+                        "Press continue to install it using:", 
+                        $"\t\t$\t sudo {GetFlatpakInstallCommand()}",
+                        DialogButtonType.Continue
+                    );
 
-                    string result = await Command.Execute("cmd.exe", $"/c {Command.wingetExe} install {app.WingetId} --accept-source-agreements --accept-package-agreements");
-                    ProgressBar.Value = ((i + 1) * 100) / apps.Count;
+                    if (!install) return;
 
-                    if (!result.Contains(app.WingetId))
-                    {
-                        throw new Exception($"Error installing {app.Name}.");
-                    }
+                    SetInstallationState(InstallationState.Installing, "Flatpak");
+                    await Command.Execute($"pkexec", GetFlatpakInstallCommand());
                 }
-
-                await ShowMessageAndClose("All apps were successfully installed!");
+                
+                var remotes = await Command.Execute("flatpak", "remotes");
+                
+                if (!remotes.Output.Contains("flathub"))
+                {
+                    await Command.Execute(
+                        "flatpak",
+                        "remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo");
+                }
             }
             catch (Exception ex)
             {
-                SetInstallationState(EnumState.Error, ex.Message);
+                SetInstallationState(InstallationState.Error, ex.Message);
             }
         }
-
-        private async Task ShowMessageAndClose(string message)
+        
+        private static string GetFlatpakInstallCommand()
         {
-            if (await WaitForUserConfirmation(message))
-            {
-                App.Main.Modals.Children.Clear();
-            }
-        }
+            if (!OperatingSystem.IsLinux()) return null;
 
+            var distro = File.ReadLines("/etc/os-release")
+                .FirstOrDefault(x => x.StartsWith("ID="))
+                ?.Replace("ID=", "")
+                .Replace("\"", "")
+                .Trim();
+
+            return distro switch
+            {
+                "fedora" => "dnf install -y flatpak",
+                "ubuntu" => "apt install -y flatpak",
+                "debian" => "apt install -y flatpak",
+                "arch" => "pacman -S --noconfirm flatpak",
+                "opensuse-tumbleweed" => "zypper install -y flatpak",
+                "opensuse-leap" => "zypper install -y flatpak",
+                _ => throw new Exception($"Unsupported Linux distribution: {distro}")
+            };
+        }
+        //
+
+        // --- Event Handlers
         private void CloseButton_OnClick(object? sender, RoutedEventArgs e)
         {
-            Command.Execute("cmd.exe", "/c powershell Stop-Process -Name 'winget' -Force");
+            if (PlatformService.PackageSource == "Winget")
+            {
+                Command.Execute("powershell", "Stop-Process -Name winget -Force");
+            }
+            
             App.Main.Modals.Children.Clear();
         }
     }

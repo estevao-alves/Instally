@@ -1,4 +1,4 @@
-@InstallyAPI_HostAddress = http://localhost:5181
+@InstallyAPI_HostAddress = http://localhost:23842
 
 GET {{InstallyAPI_HostAddress}}/weatherforecast/
 Accept: application/json

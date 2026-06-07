@@ -17,7 +17,7 @@ namespace InstallyApp.DataServices
         {
             _httpClient = httpClient;
 
-            _baseAddress = "http://localhost:5272";
+            _baseAddress = "http://localhost:23842";
             _url = $"{_baseAddress}/api";
 
             _jsonSeriarizerOptions = new JsonSerializerOptions
@@ -107,6 +107,26 @@ namespace InstallyApp.DataServices
             {
                 Console.WriteLine($"----Exception throw: {ex.Message}----");
             }
+        }
+        
+        public async Task<List<PackageEntity>> GetAllPackagesAsync()
+        {
+            var json = await API.Get("/packages?limit=6800");
+            
+            if (string.IsNullOrEmpty(json))
+                return new List<PackageEntity>();
+            
+            return JsonSerializer.Deserialize<List<PackageEntity>>(json);
+        }
+
+        public async Task<List<CollectionEntity>> GetAllCollectionsAsync()
+        {
+            var json = await API.Get("/collections");
+
+            if (string.IsNullOrEmpty(json))
+                return new List<CollectionEntity>();
+
+            return JsonSerializer.Deserialize<List<CollectionEntity>>(json);
         }
     }
 }

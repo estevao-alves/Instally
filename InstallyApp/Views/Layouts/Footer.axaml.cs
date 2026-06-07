@@ -14,27 +14,28 @@ namespace InstallyApp.Views.Layout;
 
 public partial class Footer : UserControl
 {
-    public AppInstallation appInstalationWindow;
+    public List<AppToInstall> AppsListToInstall { get; set; } = new();
     
     public Footer()
     {
         InitializeComponent();
         
-        appInstalationWindow = new AppInstallation();
+        this.Loaded += OnLoaded;
+    }
+    
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        UpdateInstallationList();
     }
     
     public class AppToInstall
     {
-        public string Name;
-        public string WingetId;
-        public Guid PackageGuid;
+        public PackageEntity Package;
         public Guid CollectionGuid;
 
-        public AppToInstall(string name, string wingetId, Guid packageGuid, Guid collectionGuid)
+        public AppToInstall(PackageEntity package, Guid collectionGuid)
         {
-            Name = name;
-            WingetId = wingetId;
-            PackageGuid = packageGuid;
+            Package = package;
             CollectionGuid = collectionGuid;
         }
     }
@@ -76,14 +77,14 @@ public partial class Footer : UserControl
         return borderWrapper;
     }
     
-    private void AtualizarLista()
+    public void UpdateInstallationList()
     {
         // Update apps visually on footer
         InstallationList.Children.Clear();
 
-        foreach (AppToInstall app in appInstalationWindow.AppsListToInstall)
+        foreach (AppToInstall app in AppsListToInstall)
         {
-            Button Icone = BuildAppIcon(app.Name, app.PackageGuid);
+            Button Icone = BuildAppIcon(app.Package.Name, app.Package.Guid);
             InstallationList.Children.Add(Icone);
         }
     }
@@ -93,25 +94,34 @@ public partial class Footer : UserControl
         InitializeComponent();
 
         // Add on variable AppsListToInstall
-        appInstalationWindow.AppsListToInstall.Add(new AppToInstall(pkg.Name, pkg.WingetId, pkg.Guid, collectionId));
+        AppsListToInstall.Add(new AppToInstall(pkg, collectionId));
         
-        Debug.WriteLine(appInstalationWindow.AppsListToInstall);
+        Debug.WriteLine(AppsListToInstall);
 
         // Add visual Icons on Footer
         Button Icone = BuildAppIcon(pkg.Name, pkg.Guid);
         InstallationList.Children.Add(Icone);
 
-        AtualizarLista();
+        UpdateInstallationList();
 
         return Icone;
     }
     
-    public void RemoveAppFromListToInstall(Guid pkgGuid)
+    public void RemoveAppsFromListToInstall(IEnumerable<Guid> packageGuids)
+    {
+        var guidSet = packageGuids.ToHashSet();
+
+        AppsListToInstall.RemoveAll(x => guidSet.Contains(x.Package.Guid));
+
+        UpdateInstallationList();
+    }
+    
+    public void RemoveAppFromListToInstall(Guid packageGuid)
     {
         // Remove from variable AppsListToInstall
-        appInstalationWindow.AppsListToInstall = new(appInstalationWindow.AppsListToInstall.FindAll(item => item.PackageGuid != pkgGuid));
+        AppsListToInstall = new(AppsListToInstall.FindAll(item => item.Package.Guid != packageGuid));
         
-        AtualizarLista();
+        UpdateInstallationList();
     }
 
     public void RemoveCollectionFromListToInstall(CollectionEntity collection)
@@ -121,11 +131,15 @@ public partial class Footer : UserControl
             RemoveAppFromListToInstall(collectionPkg.Guid);
         }
         
-        AtualizarLista();
+        UpdateInstallationList();
     }
     
     private void AppInstall_OnClick(object? sender, RoutedEventArgs e)
     {
-        appInstalationWindow.StartVerification();
+        var installation = new AppInstallation();
+
+        installation.AppsListToInstall = new List<AppToInstall>(AppsListToInstall);
+
+        _ = installation.StartChecking();
     }
 }

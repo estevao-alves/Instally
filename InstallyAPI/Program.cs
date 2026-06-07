@@ -1,8 +1,8 @@
+using System.Diagnostics;
 using FluentValidation;
 using InstallyAPI.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Instally.App.Application;
 using Microsoft.AspNetCore.Mvc;
 using InstallyAPI.Repository.Interfaces;
 using InstallyAPI.Repository;
@@ -17,55 +17,88 @@ using InstallyAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-IServiceCollection ConfigureServices()
+var port = Environment.GetEnvironmentVariable("INSTALLY_PORT") ?? "23842";
+
+builder.WebHost.UseUrls($"http://localhost:{port}");
+
+// REGISTER SERVICES
+builder.Services.AddDbContext<ApplicationDbContext>(opt =>
 {
-    builder.Services.AddDbContext<ApplicationDbContext>(opt =>
-    opt.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnection")));
+    var appDataPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "Instally"
+    );
 
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    if (!Directory.Exists(appDataPath))
+        Directory.CreateDirectory(appDataPath);
 
-    builder.Services.AddScoped(typeof(IAppRepository<>), typeof(AppRepository<>));
-    builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-    builder.Services.AddScoped<ICollectionQuery, CollectionQuery>();
-    builder.Services.AddScoped<IPackageQuery, PackageQuery>();
-    builder.Services.AddScoped<IUserQuery, UserQuery>();
+    var dbPath = Path.Combine(appDataPath, "InstallyData.db");
 
-    // UserCommands Validators
-    builder.Services.AddScoped<IValidator<AddUserCommand>, AddUserValidator>();
-    builder.Services.AddScoped<IValidator<UpdateUserCommand>, UpdateUserValidator>();
-    builder.Services.AddScoped<IValidator<DeleteUserCommand>, DeleteUserValidator>();
+    opt.UseSqlite($"Data Source={dbPath}");
+});
 
-    // PackageCommands Validators
-    builder.Services.AddScoped<IValidator<AddPackagesCommand>, AddPackageValidator>();
-    builder.Services.AddScoped<IValidator<AddToCollectionCommand>, AddToCollectionValidator>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-    builder.Services.AddMediatR(config => config.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.AddScoped(typeof(IAppRepository<>), typeof(AppRepository<>));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-    return builder.Services;
-}
+builder.Services.AddScoped<ICollectionQuery, CollectionQuery>();
+builder.Services.AddScoped<IPackageQuery, PackageQuery>();
+builder.Services.AddScoped<IUserQuery, UserQuery>();
 
-Master.ServiceProvider = ConfigureServices().BuildServiceProvider();
-Master.Mediator = Master.ServiceProvider.GetRequiredService<IMediator>();
+// Validators
+builder.Services.AddScoped<IValidator<AddUserCommand>, AddUserValidator>();
+builder.Services.AddScoped<IValidator<UpdateUserCommand>, UpdateUserValidator>();
+builder.Services.AddScoped<IValidator<DeleteUserCommand>, DeleteUserValidator>();
+
+builder.Services.AddScoped<IValidator<AddPackagesCommand>, AddPackageValidator>();
+builder.Services.AddScoped<IValidator<AddToCollectionCommand>, AddToCollectionValidator>();
+
+builder.Services.AddMediatR(config =>
+    config.RegisterServicesFromAssemblyContaining<Program>());
 
 var app = builder.Build();
 
-app.MapGet("api/user", async (IMediator mediator, ApplicationDbContext dbContext) =>
-{
-    var userQuery = Master.ServiceProvider.GetService<IUserQuery>();
-    List<UserEntity> users = userQuery.GetAll().ToList();
 
+// ✅ APPLY MIGRATIONS + SEED
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    context.Database.Migrate();
+    DbSeeder.Seed(context);
+}
+
+
+// -------------------- ROUTES --------------------
+
+// GET packages
+app.MapGet("api/package", (IPackageQuery query) =>
+{
+    return Results.Ok(query.GetAll().ToList());
+});
+
+// GET collection
+app.MapGet("api/collection", (ICollectionQuery query) =>
+{
+    return Results.Ok(query.GetAll().ToList());
+});
+
+// GET users
+app.MapGet("api/user", (IUserQuery userQuery) =>
+{
+    var users = userQuery.GetAll().ToList();
     return Results.Ok(users);
 });
 
-app.MapPost("api/user", async (IMediator mediator, ApplicationDbContext dbContext, [FromBody] UserEntity user) =>
+// POST user
+app.MapPost("api/user", async (IMediator mediator, [FromBody] UserEntity user) =>
 {
     try
     {
-        AddUserCommand addCommand = new(user.Email, user.Password);
-        var result = await Master.Mediator.Send(addCommand);
-
-        return Results.Created($"api/user/createdUserId", result);
+        var result = await mediator.Send(new AddUserCommand(user.Email, user.Password));
+        return Results.Created($"api/user/{result}", result);
     }
     catch (Exception ex)
     {
@@ -73,20 +106,48 @@ app.MapPost("api/user", async (IMediator mediator, ApplicationDbContext dbContex
     }
 });
 
-app.MapPut("api/user/{id}", async (IMediator mediator, ApplicationDbContext dbContext, Guid id, [FromBody] UserEntity user) =>
+// PUT user
+app.MapPut("api/user/{id}", async (IMediator mediator, Guid id, [FromBody] UserEntity user) =>
 {
-    await Master.Mediator.Send(new UpdateUserCommand(user.Email, user.Password));
+    await mediator.Send(new UpdateUserCommand(user.Email, user.Password));
     return Results.NoContent();
 });
 
-app.MapDelete("api/user/{id}", async (IMediator mediator, ApplicationDbContext dbContext, Guid id) =>
+// DELETE user
+app.MapDelete("api/user/{id}", async (IUserQuery userQuery, IMediator mediator, Guid id) =>
 {
-    var userQuery = Master.ServiceProvider.GetService<IUserQuery>();
-    UserEntity user = await userQuery.GetAll().FirstOrDefaultAsync(x => x.Guid == id);
+    var user = await userQuery.GetAll().FirstOrDefaultAsync(x => x.Guid == id);
 
-    await Master.Mediator.Send(new DeleteUserCommand(user.Email, user.Password));
+    if (user is null)
+        return Results.NotFound();
+
+    await mediator.Send(new DeleteUserCommand(user.Email, user.Password));
     return Results.NoContent();
 });
+
+
+// ----------- Guarantee that the API closes when main app is killed ------------
+if (args.Length > 0 && int.TryParse(args[0], out int parentPid))
+{
+    _ = Task.Run(async () =>
+    {
+        while (true)
+        {
+            try
+            {
+                Process.GetProcessById(parentPid);
+            }
+            catch
+            {
+                Environment.Exit(0);
+            }
+
+            await Task.Delay(2000);
+        }
+    });
+}
+
+// -------------------- SWAGGER --------------------
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>

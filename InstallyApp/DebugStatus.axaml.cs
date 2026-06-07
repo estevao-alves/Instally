@@ -8,6 +8,9 @@ namespace InstallyApp
         public DebugStatus()
         {
             InitializeComponent();
+                
+            Width = 800;
+            Height = 600;
         }
 
         public void CreateInfo(string? result)
@@ -15,7 +18,7 @@ namespace InstallyApp
             Dispatcher.UIThread.Post(() =>
             {
                 // Append the new line to the existing content
-                TextBlock debugTextBlock = new()
+                SelectableTextBlock debugTextBlock = new()
                 {
                     TextWrapping = TextWrapping.Wrap,
                     Text = $"{result}"

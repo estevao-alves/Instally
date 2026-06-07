@@ -1,6 +1,7 @@
 using System.IO;
 using System.Reflection;
 using FluentValidation;
+using InstallyAPI.Commands.CollectionCommands;
 using InstallyAPI.Commands.PackageCommands;
 using InstallyAPI.Commands.PackageCommands.Validators;
 using InstallyAPI.Commands.UserCommands;
@@ -15,11 +16,13 @@ using InstallyAPI.Repository.Interfaces;
 using InstallyApp.DataServices;
 using InstallyApp.Models.ViewModels;
 using InstallyApp.Pages;
+using InstallyApp.Services;
 using InstallyApp.ViewModels;
 using InstallyApp.Views.Components;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
 
 namespace InstallyApp;
 
@@ -29,11 +32,8 @@ public class App : Application
     public static IRestDataService DataService { get; private set; }
     public static IServiceProvider Services { get; private set; }
     public static IMediator Mediator { get; set; }
-    
-    public static IServiceProvider ServiceProvider { get; set; }
-    
     public static UserEntity UserAuthenticated { get; set; }
-    public static List<PackageEntity> Packages { get; set; }
+    public static List<PackageEntity> Packages { get; set; } = new();
     public static List<CollectionEntity> Collections { get; set; }
 
     public static DebugStatus Debug;
@@ -43,6 +43,8 @@ public class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            PlatformService.Initialize();
+            
             // Attach global exception handlers
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
@@ -55,7 +57,6 @@ public class App : Application
                 e.SetObserved();
             };
             
-            // Add DataBase
             var serviceCollection = new ServiceCollection();
             
             var appDataPath = Path.Combine(
@@ -68,41 +69,78 @@ public class App : Application
             }
 
             var dbPath = Path.Combine(appDataPath, "InstallyData.db");
-            
+
             serviceCollection.AddDbContext<ApplicationDbContext>(options =>
             {
                 var connectionString = $"Data Source={dbPath}";
                 options.UseSqlite(connectionString);
             });
             
-            // Apply database migrations at runtime
-            using (var scope = serviceCollection.BuildServiceProvider().CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                dbContext.Database.Migrate();
-            }
+            // Ensure DB is innitialized
+            var serviceProvider = serviceCollection.BuildServiceProvider();
 
-            // MediatR
-            serviceCollection.AddMediatR(config =>
+            using var scope = serviceProvider.CreateScope();
+
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            try
             {
-                config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-            });
+                // Clear EF migration lock if it already exists
+                // That avoids keeping the migration waiting forever in case the old migration didn't finish correctly
+                try
+                {
+                    db.Database.ExecuteSqlRaw("DELETE FROM __EFMigrationsLock");
+                }
+                catch
+                {
+                    // Lock do not exist yet, it's clean
+                }
+
+                db.Database.Migrate();
+            }
+            catch (Exception migrationEx)
+            {
+                File.WriteAllText(Path.Combine(appDataPath, "migration_error.txt"), $"=== MIGRATION FAILED ===\n{migrationEx}\n");
+
+                try
+                {
+                    if (File.Exists(dbPath))
+                    {
+                        var backupPath = Path.Combine(appDataPath, $"InstallyData_backup_{DateTime.Now:yyyyMMdd_HHmmss}.db");
+
+                        File.Copy(dbPath,backupPath);
+                    }
+                }
+                catch (Exception backupEx)
+                {
+                    File.AppendAllText(Path.Combine(appDataPath, "migration_error.txt"), $"\n=== BACKUP FAILED ===\n{backupEx}\n");
+                }
+
+                db.Database.EnsureDeleted();
+                db.Database.Migrate();
+            }
             
-            // Handlers
+            // MediatR and Handlers
             serviceCollection.AddMediatR(cfg =>
             {
+                cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
                 cfg.RegisterServicesFromAssembly(Assembly.GetAssembly(typeof(CollectionHandler))); // Register CollectionHandler
                 cfg.RegisterServicesFromAssembly(Assembly.GetAssembly(typeof(PackageHandler)));  // Register PackageHandler
                 cfg.RegisterServicesFromAssembly(Assembly.GetAssembly(typeof(UserHandler)));    // Register UserHandler
             });
             
-            // IQuery
-            serviceCollection.AddScoped(typeof(IAppRepository<>), typeof(AppRepository<>));
-            serviceCollection.AddScoped<ICollectionQuery, CollectionQuery>();
+            // Queries
             serviceCollection.AddScoped<IUserQuery, UserQuery>();
             serviceCollection.AddScoped<IPackageQuery, PackageQuery>();
-            serviceCollection.AddHttpClient<IRestDataService, RestDataService>();
+            serviceCollection.AddScoped<ICollectionQuery, CollectionQuery>();
             
+            // Services
+            serviceCollection.AddSingleton<ApiHostService>();
+            serviceCollection.AddSingleton<ApiService>();
+            serviceCollection.AddScoped<SyncService>();
+            serviceCollection.AddScoped(typeof(IAppRepository<>), typeof(AppRepository<>));
+            serviceCollection.AddHttpClient<IRestDataService, RestDataService>();
+
             // Validators
             serviceCollection.AddScoped<IValidator<AddUserCommand>, AddUserValidator>();
             serviceCollection.AddScoped<IValidator<UpdateUserCommand>, UpdateUserValidator>();
@@ -124,20 +162,21 @@ public class App : Application
             Services = serviceCollection.BuildServiceProvider();
             DataService = Services.GetRequiredService<IRestDataService>();
             Mediator = Services.GetRequiredService<IMediator>();
-            var mainWindow = Services.GetRequiredService<MainWindow>();
             // var manageUserViewModel = Services.GetRequiredService<ManageUserViewModel>();
             
+            var mainWindow = Services.GetRequiredService<MainWindow>();
             NavigationService = new NavigationService(mainWindow);
 
             mainWindow.DataContext = mainWindow;
+            desktop.MainWindow = mainWindow;
 
             DisableAvaloniaDataAnnotationValidation();
             
-            /*
-            Avalonia.Diagnostics.DevToolsExtensions.AttachDevTools(this);
-            */
-
-            desktop.MainWindow = mainWindow;
+            desktop.Exit += (_, _) =>
+            {
+                var apiHost = Services.GetRequiredService<ApiHostService>();
+                apiHost.Stop();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();

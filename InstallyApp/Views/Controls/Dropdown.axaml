@@ -35,8 +35,8 @@
     <x:Int32 x:Key="ComboBoxPopupMaxNumberOfItems">15</x:Int32>
     <x:Int32 x:Key="ComboBoxPopupMaxNumberOfItemsThatCanBeShownOnOneSide">7</x:Int32>
 
-    <Thickness x:Key="ComboBoxPadding">12,5,0,7</Thickness>
-    <Thickness x:Key="ComboBoxEditableTextPadding">11,5,32,6</Thickness>
+    <Thickness x:Key="ComboBoxPadding">16,7,0,7</Thickness>
+    <Thickness x:Key="ComboBoxEditableTextPadding">15,5,32,6</Thickness>
     <x:Double x:Key="ComboBoxMinHeight">32</x:Double>
 
     <ControlTheme TargetType="Dropdown" x:Key="{x:Type Dropdown}">
@@ -96,7 +96,7 @@
                             Height="12"
                             HorizontalAlignment="Right"
                             IsHitTestVisible="False"
-                            Margin="0,0,10,0"
+                            Margin="0,0,15,0"
                             UseLayoutRounding="False"
                             VerticalAlignment="Center"
                             Width="12"

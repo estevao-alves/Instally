@@ -64,13 +64,13 @@ public partial class AppInSearchList : UserControl
                 return;
             }
             
-            PackageEntity pkg = GetPackages.CatchPackages(PkgGuid);
+            PackageEntity pkg = GetPackages.CatchPackage(PkgGuid);
             
             if (IsActive) {
                 IsActive = false;
                 WrapperAppItem.Background = new SolidColorBrush(Color.FromArgb(0,0,0,0));
 
-                App.Main.AppSearchWindow.RemoverApp(appInListToInstall, pkg.WingetId);
+                App.Main.AppSearchWindow.RemoverApp(appInListToInstall, pkg.PackageIds);
             }
             else
             {
@@ -96,7 +96,7 @@ public partial class AppInSearchList : UserControl
         {
             if (InfoIcon.IsChecked ?? false)
             {
-                PackageEntity? pkg = GetPackages.CatchPackages(PkgGuid);
+                PackageEntity? pkg = GetPackages.CatchPackage(PkgGuid);
                 
                 App.Main.AppSearchWindow.AppInfo.AtualizarInformacoes(pkg);
 
@@ -113,10 +113,15 @@ public partial class AppInSearchList : UserControl
         {
             foreach (var collection in App.Collections)
             {
-                PackageEntity? pkg = collection.Packages.Find(pkg => pkg.Guid == pkgGuid);
-                if (pkg is not null) return collection.Title;
+                if (collection?.Packages == null || !collection.Packages.Any())
+                    continue;
+
+                var pkg = collection.Packages.Find(p => p != null && p.Guid == pkgGuid);
+
+                if (pkg != null)
+                    return collection.Title;
             }
-            
+
             return null;
         }
     }

@@ -4,7 +4,6 @@ using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Instally.App.Application;
 using InstallyAPI.Models;
 using InstallyApp.DataServices;
 using InstallyApp.Views.Modals;
