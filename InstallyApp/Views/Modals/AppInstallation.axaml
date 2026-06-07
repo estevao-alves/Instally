@@ -86,7 +86,7 @@
                             x:Name="Confirm" />
                     </StackPanel>
 
-                    <!-- ToDo Log reveal Button -->
+                    <!-- Do Log reveal Button -->
                     <!-- <IconButton -->
                     <!--     Classes="subtle icon-only" -->
                     <!--     Grid.Row="4" -->
