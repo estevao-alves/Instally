@@ -21,11 +21,13 @@
 
 Instally is a GUI interface for package managers such as WinGet and Flatpak, designed to simplify the application installation process. No more browsing multiple websites or dealing with inconsistent download interfaces, Instally centralizes everything, ensuring you always get the latest official versions of the apps you need
 
+
 <div align="center">
   <a href="https://www.instally.app">
-    <img src="./InstallyApp/Assets/Images/instally-main-window.png" alt="Instally Main Window">
+    <img src="./InstallyApp/Assets/Images/instally-app-details.png" alt="Instally App Details">
   </a>
 </div>
+
 
 ## 🛠️ Features
 
@@ -35,6 +37,14 @@ Instally is a GUI interface for package managers such as WinGet and Flatpak, des
 - **Find Your favorite app**: Easily search between thousands of packages available
 - **Ad-Free Interface**: Enjoy a clean, distraction-free experience
 - **Cross-Platform**: Install apps using WinGet on Windows and Flatpak on Linux
+
+
+<div align="center">
+  <a href="https://www.instally.app">
+    <img src="./InstallyApp/Assets/Images/instally-search.png" alt="Instally Search">
+  </a>
+</div>
+
 
 ## ✨ Future Goals
 
@@ -47,19 +57,14 @@ Instally is a GUI interface for package managers such as WinGet and Flatpak, des
 - Drag and drop apps between collections and reorder them
 - Optimized performance
 
-<div align="center">
-  <a href="https://www.instally.app">
-    <img src="./InstallyApp/Assets/Images/instally-search.png" alt="Instally Search">
-  </a>
-</div>
-
 ## 📦 Packages
 
 Applications are sourced directly directly from [WinGet](https://github.com/microsoft/winget-cli), Microsoft's official package manager and [Flatpak](https://flatpak.org), one of the most popular application platforms on Linux, to provide a library of 6,000+ verified applications
 
+
 <div align="center">
   <a href="https://www.instally.app">
-    <img src="./InstallyApp/Assets/Images/instally-app-details.png" alt="Instally App Details">
+    <img src="./InstallyApp/Assets/Images/instally-main-window.png" alt="Instally Main Window">
   </a>
 </div>
 
@@ -78,7 +83,7 @@ https://ko-fi.com/stay
 
 ## 📜 License
 
-Instally is licensed under the [GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Instally is licensed under the [GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 
 [Back to top](#top)
