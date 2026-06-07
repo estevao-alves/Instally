@@ -24,6 +24,18 @@ Instally is a GUI interface for package managers such as WinGet and Flatpak, des
 
 <div align="center">
   <a href="https://www.instally.app">
+    <img src="./InstallyApp/Assets/Images/instally-main-window.png" alt="Instally Main Window">
+  </a>
+</div>
+
+
+## 📦 Packages
+
+Applications are sourced directly directly from [WinGet](https://github.com/microsoft/winget-cli), Microsoft's official package manager and [Flatpak](https://flatpak.org), one of the most popular application platforms on Linux, to provide a library of 6,000+ verified applications
+
+
+<div align="center">
+  <a href="https://www.instally.app">
     <img src="./InstallyApp/Assets/Images/instally-app-details.png" alt="Instally App Details">
   </a>
 </div>
@@ -56,17 +68,6 @@ Instally is a GUI interface for package managers such as WinGet and Flatpak, des
 - The apps added in our [online search](https://instally.app/search) should automatically be added to Instally App when downloaded
 - Drag and drop apps between collections and reorder them
 - Optimized performance
-
-## 📦 Packages
-
-Applications are sourced directly directly from [WinGet](https://github.com/microsoft/winget-cli), Microsoft's official package manager and [Flatpak](https://flatpak.org), one of the most popular application platforms on Linux, to provide a library of 6,000+ verified applications
-
-
-<div align="center">
-  <a href="https://www.instally.app">
-    <img src="./InstallyApp/Assets/Images/instally-main-window.png" alt="Instally Main Window">
-  </a>
-</div>
 
 
 ## 💜 Contribute
