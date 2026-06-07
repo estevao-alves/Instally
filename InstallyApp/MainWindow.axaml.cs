@@ -17,6 +17,7 @@ using InstallyApp.Views.Layout;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui;
 using Avalonia.Diagnostics;
+using Avalonia.Platform;
 
 namespace InstallyApp
 {
@@ -33,6 +34,8 @@ namespace InstallyApp
         {
             App.Main = this;
             InitializeComponent();
+            
+            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://InstallyApp/Assets/instally-logo.png")));
             
             PointerPressed += ClearFocus;
 
@@ -94,7 +97,7 @@ namespace InstallyApp
                 var packagesQuery = App.Services.GetRequiredService<IPackageQuery>();
                 App.Packages = packagesQuery.GetAll().ToList();
 
-                if (App.Packages.Count < 4000)
+                if (App.Packages.Count < 3000)
                 {
                     using var scope = App.Services.CreateScope();
                     var sync = scope.ServiceProvider.GetRequiredService<SyncService>();

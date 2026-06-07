@@ -1,6 +1,6 @@
 <Window
     Background="{DynamicResource PrimaryBackground}"
-    Icon="/Assets/instally-logo.ico"
+    Icon="/Assets/instally-logo.png"
     KeyDown="InputElement_OnKeyDown"
     MinHeight="540"
     MinWidth="820"

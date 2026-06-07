@@ -11,9 +11,8 @@ namespace InstallyApp.Pages
     public partial class AppInstallation : UserControl
     {
         public List<Footer.AppToInstall> AppsListToInstall { get; set; } = new();
-        public InstallationState CurrentState { get; private set; }
         
-        public enum InstallationState
+        private enum InstallationState
         {
             Checking,
             Installing,
@@ -21,7 +20,7 @@ namespace InstallyApp.Pages
             Error
         }
         
-        public enum DialogButtonType
+        private enum DialogButtonType
         {
             Continue,
             Retry,
@@ -36,15 +35,13 @@ namespace InstallyApp.Pages
         }
         
         // --- Main Workflow Methods
-        public void SetInstallationState(
+        private void SetInstallationState(
             InstallationState state,
             string title = "",
             string details = "",
             bool inProgress = true,
             DialogButtonType dialogType = DialogButtonType.Continue)
         {
-            CurrentState = state;
-
             ApplyStateUI(state, title, details);
             if (!inProgress) ApplyDialogButtonTypeUI(dialogType);
         }
@@ -67,7 +64,9 @@ namespace InstallyApp.Pages
             
             var packageSource = PlatformService.PackageSource;
 
-            AssureFlatpakIsReady();
+            await AssureFlatpakIsReady();
+            
+            SetInstallationState(InstallationState.Checking, "Flathub");
 
             for (int i = 0; i < AppsListToInstall.Count; i++)
             {
@@ -378,32 +377,46 @@ namespace InstallyApp.Pages
 
             try
             {
+                // Flatpak verification
+                
                 var result = await Command.Execute("flatpak", "--version");
                 
                 if (result.ExitCode != 0)
                 {
                     SetInstallationState(InstallationState.Error);
                     
-                    bool install = await WaitForUserConfirmation(
-                        "Flatpak wasn't found.\n" +
-                        "Press continue to install it using:", 
-                        $"\t\t$\t sudo {GetFlatpakInstallCommand()}",
+                    bool confirmed = await WaitForUserConfirmation(
+                        "Flatpak wasn't found\n" +
+                        "Press continue to install it using:",
+                        $"\t\t$  sudo {GetFlatpakInstallCommand()}",
                         DialogButtonType.Continue
                     );
 
-                    if (!install) return;
+                    if (!confirmed) return;
 
                     SetInstallationState(InstallationState.Installing, "Flatpak");
                     await Command.Execute($"pkexec", GetFlatpakInstallCommand());
                 }
                 
+                // Flathub repository verification
+                
                 var remotes = await Command.Execute("flatpak", "remotes");
                 
                 if (!remotes.Output.Contains("flathub"))
                 {
-                    await Command.Execute(
-                        "flatpak",
-                        "remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo");
+                    SetInstallationState(InstallationState.Error);
+
+                    bool confirmed = await WaitForUserConfirmation(
+                        "Flathub is not configured\n" +
+                        "Press continue to add it using:",
+                        $"\t\t$  remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo",
+                        DialogButtonType.Continue
+                    );
+                    
+                    if (!confirmed) return;
+                    
+                    SetInstallationState(InstallationState.Installing, "Flathub");
+                    await Command.Execute("flatpak", "remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo");
                 }
             }
             catch (Exception ex)
