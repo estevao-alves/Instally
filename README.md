@@ -58,30 +58,6 @@ Applications are sourced directly directly from [WinGet](https://github.com/micr
 </div>
 
 
-## ✨ Future Goals
-
-- [ ] **User Login**: Save and restore collections across devices effortlessly
-- [ ] **Uninstall Apps**: Be able to quickly uninstall your apps directly from Instally
-
-**Additional Planned Features:**
-- Add the same app to multiple collections
-- The apps added in our [online search](https://instally.app/search) should automatically be added to Instally App when downloaded
-- Drag and drop apps between collections and reorder them
-- Optimized performance
-
-
-## 💜 Contribute
-
-This is an indie project and will only be able to continue its development with people's support. If you enjoy using Instally, please consider contributing in one of the following ways:
-
-
-- Promoting Instally through any channels you can!
-- Buying products from my store, [Cozy Dragon](https://www.cozydragon.shop/#!/)
-- Making a donation - any amount is highly appreciated! 💜
-
-https://ko-fi.com/stay
-
-
 ## 📜 License
 
 Instally is licensed under the [GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html)
